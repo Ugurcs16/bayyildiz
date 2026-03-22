@@ -7,5 +7,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return [
     { url: `${base}/`, lastModified: new Date() },
     { url: `${base}/hakkimizda`, lastModified: new Date() },
+    { url: `${base}/gizlilik-politikasi`, lastModified: new Date() },
+    { url: `${base}/sartlar-ve-kosullar`, lastModified: new Date() },
   ];
 }

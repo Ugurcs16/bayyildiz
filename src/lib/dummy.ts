@@ -15,6 +15,8 @@ export type DummyProduct = {
   imageAlt: string;
   hoverImage?: string;
   teaser: string;
+  /** WooCommerce / CMS ile doldurulacak meta açıklama; kartta gösterilmez. */
+  seoDescription?: string;
   stock: "var" | "az" | "yok";
   category: CategoryId;
 };

@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <article className="mx-auto max-w-3xl px-4 py-14 sm:px-6 sm:py-20">
-      <h1 className="text-3xl font-semibold tracking-tight text-[var(--color-espresso)] sm:text-4xl">
+      <h1 className="font-display text-3xl font-semibold tracking-tight text-[var(--color-espresso)] sm:text-4xl">
         BİZİM MİRASIMIZ
       </h1>
 
@@ -20,7 +20,7 @@ export default function AboutPage() {
         devam etmektedir.
       </p>
 
-      <h2 className="mt-12 text-xl font-semibold text-[var(--color-espresso)] sm:text-2xl">
+      <h2 className="font-display mt-12 text-xl font-semibold text-[var(--color-espresso)] sm:text-2xl">
         Bayyıldız&apos;ın 35 Yılı Aşan Yolculuğu
       </h2>
 

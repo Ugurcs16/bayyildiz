@@ -6,7 +6,7 @@ export const SITE_DESCRIPTION =
 export const WHATSAPP_NUMBER = "905522208298";
 export const WHATSAPP_DISPLAY = "0552 220 82 98";
 
-/** Geçici: kategori satırları vitrin bölümüne kaydırır. */
+/** Kategori satırları vitrin bölümüne kaydırır; Hakkımızda ayrı sayfa. */
 export const NAV_ITEMS = [
   { href: "/", label: "Ana Sayfa" },
   { href: "/#kategoriler", label: "Günlük" },
@@ -14,8 +14,17 @@ export const NAV_ITEMS = [
   { href: "/#kategoriler", label: "Outdoor" },
   { href: "/#kategoriler", label: "Bot" },
   { href: "/#kategoriler", label: "Yeni Sezon" },
+  { href: "/hakkimizda", label: "Hakkımızda" },
   { href: "/#iletisim", label: "İletişim" },
 ] as const;
+
+export const FOOTER_ABOUT_SNIPPET =
+  "Bursa kökenli Bayyıldız; hakiki deri erkek ayakkabısında kalite, konfor ve dürüst fiyatı bir araya getirir. İki mağazamızda sizi ağırlamaktan mutluluk duyarız.";
+
+export const LEGAL_ROUTES = {
+  privacy: "/gizlilik-politikasi",
+  terms: "/sartlar-ve-kosullar",
+} as const;
 
 export const INSTAGRAM_URL = "https://www.instagram.com/bayyildizayakkabi/";
 export const INSTAGRAM_HANDLE = "@bayyildizayakkabi";
@@ -45,8 +54,9 @@ export const STORES = [
   },
 ] as const;
 
+/** Deri / erkek ayakkabı vitrin atmosferi (Pexels). */
 export const DEFAULT_HERO_VIDEO =
-  "https://videos.pexels.com/video-files/3752712/3752712-hd_1920_1080_25fps.mp4";
+  "https://videos.pexels.com/video-files/4927864/4927864-hd_1920_1080_24fps.mp4";
 
 export const DEFAULT_HERO_POSTER =
-  "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=1920&q=80";
+  "https://images.unsplash.com/photo-1614252369475-531eba835eb1?w=1920&q=80";

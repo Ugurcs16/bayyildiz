@@ -11,6 +11,8 @@
   --color-anthracite-soft: #3d3d3d;
   --color-bronze-start: #8b6914;
   --color-bronze-end: #5c3d1e;
+  --color-gold-soft: #c9a962;
+  --color-ivory: #faf8f5;
   --font-sans: var(--font-inter), system-ui, sans-serif;
 }
 
@@ -23,6 +25,8 @@
   --color-taupe-muted: var(--color-taupe-muted);
   --color-anthracite: var(--color-anthracite);
   --color-anthracite-soft: var(--color-anthracite-soft);
+  --color-gold-soft: var(--color-gold-soft);
+  --color-ivory: var(--color-ivory);
   --font-sans: var(--font-sans);
 }
 
@@ -39,4 +43,12 @@ body {
 ::selection {
   background-color: color-mix(in srgb, var(--color-taupe) 45%, transparent);
   color: var(--color-espresso);
+}
+
+.font-display {
+  font-family: var(--font-display), "Cormorant Garamond", Georgia, serif;
+}
+
+.text-balance {
+  text-wrap: balance;
 }
