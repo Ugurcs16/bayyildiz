@@ -1,0 +1,52 @@
+export const SITE_NAME = "Bayyıldız Ayakkabı";
+export const SITE_URL = "https://bayyildiz.com";
+export const SITE_DESCRIPTION =
+  "Hakiki deri erkek ayakkabıları. Bursa'dan güvenilir alışveriş, uygun fiyat ve kaliteli işçilik.";
+
+export const WHATSAPP_NUMBER = "905522208298";
+export const WHATSAPP_DISPLAY = "0552 220 82 98";
+
+/** Geçici: kategori satırları vitrin bölümüne kaydırır. */
+export const NAV_ITEMS = [
+  { href: "/", label: "Ana Sayfa" },
+  { href: "/#kategoriler", label: "Günlük" },
+  { href: "/#kategoriler", label: "Klasik" },
+  { href: "/#kategoriler", label: "Outdoor" },
+  { href: "/#kategoriler", label: "Bot" },
+  { href: "/#kategoriler", label: "Yeni Sezon" },
+  { href: "/#iletisim", label: "İletişim" },
+] as const;
+
+export const INSTAGRAM_URL = "https://www.instagram.com/bayyildizayakkabi/";
+export const INSTAGRAM_HANDLE = "@bayyildizayakkabi";
+
+export const STORE_HOURS = {
+  weekday: "Hafta içi ve Cumartesi: 09.00 - 21.00",
+  sunday: "Pazar: 11.00 - 20.00",
+} as const;
+
+export const STORES = [
+  {
+    name: "Bayyıldız Heykel",
+    address:
+      "Orhanbey Mah. Atatürk Cad. Kurtul Sok. No:4-42 Osmanğazi, Bursa",
+    phone: "(0224) 220 82 98",
+    phoneHref: "tel:+902242208298",
+    mapUrl:
+      "https://www.google.com/maps/search/?api=1&query=Bayy%C4%B1ld%C4%B1z+Ayakkab%C4%B1+Heykel+Bursa",
+  },
+  {
+    name: "Bayyıldız FSM",
+    address: "Fatih Sultan Mehmet Blv. Üstünkaya Sitesi A Blok No:84/C, Bursa",
+    phone: "0552 222 82 98",
+    phoneHref: "tel:+905522228298",
+    mapUrl:
+      "https://www.google.com/maps/search/?api=1&query=%C3%9Cst%C3%BCnkaya+Sitesi+A+Blok+84%2FC+Bursa",
+  },
+] as const;
+
+export const DEFAULT_HERO_VIDEO =
+  "https://videos.pexels.com/video-files/3752712/3752712-hd_1920_1080_25fps.mp4";
+
+export const DEFAULT_HERO_POSTER =
+  "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=1920&q=80";
