@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, Inter } from "next/font/google";
 import { SiteShell } from "@/components/layout/SiteShell";
+import { AppProviders } from "@/components/providers/app-providers";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/constants";
 import "./globals.css";
 
@@ -45,7 +46,9 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${display.variable} flex min-h-full flex-col antialiased`}
       >
-        <SiteShell>{children}</SiteShell>
+        <AppProviders>
+          <SiteShell>{children}</SiteShell>
+        </AppProviders>
       </body>
     </html>
   );
