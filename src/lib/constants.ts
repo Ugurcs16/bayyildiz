@@ -26,6 +26,25 @@ export const LEGAL_ROUTES = {
   terms: "/sartlar-ve-kosullar",
 } as const;
 
+export const CATEGORY_QUICK = [
+  { slug: "gunluk", title: "Günlük", subtitle: "Her güne rahat adım" },
+  { slug: "klasik", title: "Klasik", subtitle: "Zamansız şıklık" },
+  { slug: "outdoor", title: "Outdoor", subtitle: "Dayanıklı taban" },
+  { slug: "bot", title: "Bot", subtitle: "Kışa hazır çizgiler" },
+  { slug: "yeni-sezon", title: "Yeni Sezon", subtitle: "Yeni gelen modeller" },
+] as const;
+
+export const TRUST_BADGES = [
+  "Hakiki deri kalitesi",
+  "Bursa'da iki mağaza",
+  "Hızlı WhatsApp desteği",
+  "Güvenli alışveriş deneyimi",
+  "Özenli paketleme",
+] as const;
+
+export const PLACEHOLDER_PRODUCT_IMAGE =
+  "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=1200&q=80&auto=format&fit=crop";
+
 export const INSTAGRAM_URL = "https://www.instagram.com/bayyildizayakkabi/";
 export const INSTAGRAM_HANDLE = "@bayyildizayakkabi";
 
@@ -38,7 +57,7 @@ export const STORES = [
   {
     name: "Bayyıldız Heykel",
     address:
-      "Orhanbey Mah. Atatürk Cad. Kurtul Sok. No:4-42 Osmanğazi, Bursa",
+      "Orhanbey Mah. Atatürk Cad. Kurtul Sok. No:4-42 Osmangazi, Bursa",
     phone: "(0224) 220 82 98",
     phoneHref: "tel:+902242208298",
     mapUrl:

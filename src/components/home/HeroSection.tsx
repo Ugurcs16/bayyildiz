@@ -1,5 +1,3 @@
-"use client";
-
 import Link from "next/link";
 import { DEFAULT_HERO_POSTER, WHATSAPP_NUMBER } from "@/lib/constants";
 import { buildWhatsAppUrl, DEFAULT_PRODUCT_MESSAGE } from "@/lib/whatsapp";
@@ -14,29 +12,24 @@ export function HeroSection({ videoUrl, posterUrl }: Props) {
   const wa = buildWhatsAppUrl(DEFAULT_PRODUCT_MESSAGE, WHATSAPP_NUMBER);
 
   return (
-    <section className="relative flex min-h-[100svh] items-end sm:items-center">
-      <div className="absolute inset-0 z-0">
-        <video
-          className="absolute inset-0 h-full w-full scale-105 object-cover object-center"
-          autoPlay
-          muted
-          playsInline
-          loop
-          poster={poster}
-          aria-label="Deri ayakkabı ve mağaza atmosferi"
-        >
-          <source src={videoUrl} type="video/mp4" />
-        </video>
-        {/* Mobilde okunabilirlik: altta daha koyu şerit */}
-        <div
-          className="absolute inset-0 bg-gradient-to-t from-black/92 via-[var(--color-espresso)]/70 to-[var(--color-espresso)]/25 sm:from-[var(--color-espresso)]/88 sm:via-[var(--color-espresso)]/50 sm:to-[var(--color-espresso)]/20"
-          aria-hidden
-        />
-        <div
-          className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_20%,rgba(201,169,98,0.12),transparent_55%)]"
-          aria-hidden
-        />
-      </div>
+    <section className="relative flex min-h-[100svh] items-end overflow-hidden sm:items-center">
+      <video
+        className="absolute inset-0 z-0 h-full w-full object-cover object-center"
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="metadata"
+        poster={poster}
+        aria-label="Deri ayakkabı ve mağaza atmosferi"
+      >
+        <source src={videoUrl} type="video/mp4" />
+      </video>
+
+      <div
+        className="absolute inset-0 z-[1] bg-gradient-to-t from-black/45 via-black/20 to-black/10"
+        aria-hidden
+      />
 
       <div className="relative z-10 mx-auto w-full max-w-6xl px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-28 sm:px-6 sm:pb-24 sm:pt-32 md:pb-20 md:pt-28">
         <div className="max-w-2xl">
@@ -66,7 +59,7 @@ export function HeroSection({ videoUrl, posterUrl }: Props) {
               rel="noopener noreferrer"
               className="inline-flex min-h-[3.25rem] min-w-[200px] items-center justify-center rounded-full border border-white/35 bg-white/[0.08] px-8 text-sm font-semibold tracking-wide text-white backdrop-blur-md transition-[background-color,border-color] hover:border-white/55 hover:bg-white/[0.14]"
             >
-              {"WhatsApp ile danış"}
+              WhatsApp ile danış
             </a>
           </div>
         </div>

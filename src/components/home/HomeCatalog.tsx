@@ -2,19 +2,16 @@
 
 import { useMemo, useState } from "react";
 import { ProductCard } from "@/components/product/ProductCard";
-import {
-  CATEGORIES,
-  DUMMY_PRODUCTS,
-  type CategoryId,
-} from "@/lib/dummy";
+import { CATEGORIES, type CategoryId } from "@/lib/dummy";
+import type { CatalogProduct } from "@/lib/products-normalizer";
 
-export function HomeCatalog() {
+export function HomeCatalog({ products }: { products: CatalogProduct[] }) {
   const [active, setActive] = useState<CategoryId | "all">("all");
 
   const filtered = useMemo(() => {
-    if (active === "all") return DUMMY_PRODUCTS;
-    return DUMMY_PRODUCTS.filter((p) => p.category === active);
-  }, [active]);
+    if (active === "all") return products;
+    return products.filter((p) => p.category === active);
+  }, [active, products]);
 
   return (
     <>
@@ -126,6 +123,9 @@ export function HomeCatalog() {
                 ve stok için mağaza veya WhatsApp ile iletişime geçebilirsiniz.
               </p>
             </div>
+            <p className="text-sm font-semibold text-[var(--color-espresso)]/80">
+              {filtered.length} model gösteriliyor
+            </p>
           </div>
           {filtered.length === 0 ? (
             <p className="mt-14 text-center text-sm text-[var(--color-anthracite-soft)]">

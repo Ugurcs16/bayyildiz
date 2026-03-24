@@ -1,11 +1,11 @@
 import { HeroSection } from "@/components/home/HeroSection";
 import { HomeCatalog } from "@/components/home/HomeCatalog";
 import {
-  DEFAULT_HERO_VIDEO,
   SITE_DESCRIPTION,
   SITE_NAME,
   SITE_URL,
 } from "@/lib/constants";
+import { getCatalogProducts } from "@/lib/products-normalizer";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -23,6 +23,8 @@ const organizationJsonLd = {
 };
 
 export default function HomePage() {
+  const products = getCatalogProducts();
+
   return (
     <>
       <script
@@ -31,7 +33,7 @@ export default function HomePage() {
           __html: JSON.stringify(organizationJsonLd),
         }}
       />
-      <HeroSection videoUrl={DEFAULT_HERO_VIDEO} />
+      <HeroSection videoUrl="/hero-video.mp4" />
       <section
         aria-label="Öne çıkan vaatler"
         className="border-b border-black/[0.06] bg-[var(--color-cream-dark)]/40 px-4 py-10 sm:px-6 sm:py-12"
@@ -72,7 +74,7 @@ export default function HomePage() {
           ))}
         </div>
       </section>
-      <HomeCatalog />
+      <HomeCatalog products={products} />
     </>
   );
 }

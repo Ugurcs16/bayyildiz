@@ -1,22 +1,22 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 import { WHATSAPP_NUMBER } from "@/lib/constants";
 import {
-  type DummyProduct,
   formatPrice,
   stockLabel,
 } from "@/lib/dummy";
+import type { CatalogProduct } from "@/lib/products-normalizer";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
 
-function waMessage(p: DummyProduct) {
+function waMessage(p: CatalogProduct) {
   return `Merhaba, "${p.name}" (${p.code}) hakkında bilgi almak istiyorum.`;
 }
 
-export function ProductCard({ product }: { product: DummyProduct }) {
+export function ProductCard({ product }: { product: CatalogProduct }) {
   const [hover, setHover] = useState(false);
-  const [fav, setFav] = useState(false);
   const src =
     hover && product.hoverImage ? product.hoverImage : product.image;
   const wa = buildWhatsAppUrl(waMessage(product), WHATSAPP_NUMBER);
@@ -29,6 +29,9 @@ export function ProductCard({ product }: { product: DummyProduct }) {
         onMouseEnter={() => setHover(true)}
         onMouseLeave={() => setHover(false)}
       >
+        <Link href={`/urun/${product.slug}`} className="absolute inset-0 z-10">
+          <span className="sr-only">{product.name} detayına git</span>
+        </Link>
         <Image
           src={src}
           alt={product.imageAlt}
@@ -49,7 +52,9 @@ export function ProductCard({ product }: { product: DummyProduct }) {
 
       <div className="flex flex-1 flex-col p-5">
         <h3 className="font-display text-lg font-semibold leading-snug text-[var(--color-espresso)]">
-          {product.name}
+          <Link href={`/urun/${product.slug}`} className="hover:underline">
+            {product.name}
+          </Link>
         </h3>
         <p className="mt-1.5 text-xs text-[var(--color-anthracite-soft)]">
           Model{" "}
@@ -72,27 +77,20 @@ export function ProductCard({ product }: { product: DummyProduct }) {
           ) : null}
         </div>
 
-        <details className="mt-4 rounded-xl border border-black/[0.06] bg-[var(--color-cream)]/50 px-3 py-2.5">
-          <summary className="cursor-pointer text-sm font-semibold text-[var(--color-espresso)]">
-            Hızlı incele
-          </summary>
-          <p className="mt-2 text-sm leading-relaxed text-[var(--color-anthracite-soft)]">
-            {product.teaser}
-          </p>
-        </details>
+        <p className="mt-4 rounded-xl border border-black/[0.06] bg-[var(--color-cream)]/50 px-3 py-2.5 text-sm leading-relaxed text-[var(--color-anthracite-soft)]">
+          <span className="mb-1 block text-sm font-semibold text-[var(--color-espresso)]">
+            Kısa bilgi
+          </span>
+          {product.teaser}
+        </p>
 
         <div className="mt-5 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-          <button
-            type="button"
-            onClick={() => setFav((v) => !v)}
-            className={`min-h-11 rounded-full text-sm font-semibold transition-colors ${
-              fav
-                ? "bg-[var(--color-taupe)]/30 text-[var(--color-espresso)]"
-                : "border border-black/[0.08] bg-white text-[var(--color-espresso)] hover:border-black/15"
-            }`}
+          <Link
+            href={`/urun/${product.slug}`}
+            className="inline-flex min-h-11 items-center justify-center rounded-full border border-black/[0.08] bg-white px-4 text-sm font-semibold text-[var(--color-espresso)] transition-colors hover:border-black/15"
           >
-            {fav ? "Favoride" : "Favorilere ekle"}
-          </button>
+            Ürünü incele
+          </Link>
           <a
             href={wa}
             target="_blank"
