@@ -112,16 +112,20 @@ export function Header() {
   useEffect(() => {
     if (open) {
       document.documentElement.style.overflow = "hidden";
+      document.body.style.overflow = "hidden";
     } else {
       document.documentElement.style.overflow = "";
+      document.body.style.overflow = "";
     }
     return () => {
       document.documentElement.style.overflow = "";
+      document.body.style.overflow = "";
     };
   }, [open]);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-black/[0.06] bg-[var(--color-cream)]/92 backdrop-blur-xl backdrop-saturate-150">
+    <>
+    <header className="sticky top-0 z-[110] border-b border-black/[0.06] bg-[var(--color-cream)]/92 backdrop-blur-xl backdrop-saturate-150">
       <div className="mx-auto flex h-[3.75rem] max-w-6xl items-center gap-3 px-4 sm:h-[4.25rem] sm:gap-4 sm:px-6">
         <Link
           href="/"
@@ -174,14 +178,22 @@ export function Header() {
         </button>
         </div>
       </div>
+    </header>
 
-      <div
-        id="mobile-nav-overlay"
-        className={`fixed inset-0 top-[3.75rem] z-40 flex flex-col bg-[var(--color-cream)]/98 backdrop-blur-lg transition-[visibility,opacity] duration-200 sm:top-[4.25rem] lg:hidden ${
-          open ? "visible opacity-100" : "invisible opacity-0 pointer-events-none"
-        }`}
-        aria-hidden={!open}
-      >
+    <div
+      id="mobile-nav-overlay"
+      className={`fixed inset-0 z-[100] lg:hidden transition-opacity duration-200 ${
+        open ? "pointer-events-auto opacity-100" : "pointer-events-none invisible opacity-0"
+      }`}
+      aria-hidden={!open}
+    >
+      <button
+        type="button"
+        className="absolute inset-0 bg-black/40"
+        aria-label="Menüyü kapat"
+        onClick={() => setOpen(false)}
+      />
+      <div className="absolute left-0 right-0 top-[3.75rem] bottom-0 flex flex-col bg-[var(--color-cream)] shadow-[0_-4px_32px_rgba(0,0,0,0.12)] sm:top-[4.25rem]">
         <nav
           className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-1 overflow-y-auto px-4 py-6 sm:px-6"
           aria-label="Mobil menü"
@@ -197,10 +209,11 @@ export function Header() {
             />
           ))}
         </nav>
-        <p className="border-t border-black/[0.06] px-6 py-4 text-center text-xs text-[var(--color-anthracite-soft)]">
+        <p className="border-t border-black/[0.06] bg-[var(--color-cream)] px-6 py-4 text-center text-xs text-[var(--color-anthracite-soft)]">
           İki mağaza · WhatsApp ile hızlı iletişim
         </p>
       </div>
-    </header>
+    </div>
+    </>
   );
 }

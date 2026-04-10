@@ -12,7 +12,7 @@ export function HeroSection({ videoUrl, posterUrl }: Props) {
   const wa = buildWhatsAppUrl(DEFAULT_PRODUCT_MESSAGE, WHATSAPP_NUMBER);
 
   return (
-    <section className="relative flex min-h-[52svh] items-end overflow-hidden min-[480px]:min-h-[55svh] sm:min-h-[72svh] sm:items-center md:min-h-[80svh] lg:min-h-[85svh]">
+    <section className="relative z-0 flex min-h-[52svh] items-end overflow-hidden min-[480px]:min-h-[55svh] sm:min-h-[72svh] sm:items-center md:min-h-[80svh] lg:min-h-[85svh]">
       <video
         className="absolute inset-0 z-0 h-full w-full object-cover object-center"
         autoPlay
