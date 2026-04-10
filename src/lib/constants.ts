@@ -6,14 +6,14 @@ export const SITE_DESCRIPTION =
 export const WHATSAPP_NUMBER = "905522208298";
 export const WHATSAPP_DISPLAY = "0552 220 82 98";
 
-/** Kategori satırları vitrin bölümüne kaydırır; Hakkımızda ayrı sayfa. */
+/** Kategori öğeleri `/kategori/[slug]` sayfalarına gider. */
 export const NAV_ITEMS = [
   { href: "/", label: "Ana Sayfa" },
-  { href: "/#kategoriler", label: "Günlük" },
-  { href: "/#kategoriler", label: "Klasik" },
-  { href: "/#kategoriler", label: "Outdoor" },
-  { href: "/#kategoriler", label: "Bot" },
-  { href: "/#kategoriler", label: "Yeni Sezon" },
+  { href: "/kategori/gunluk", label: "Günlük" },
+  { href: "/kategori/klasik", label: "Klasik" },
+  { href: "/kategori/outdoor", label: "Outdoor" },
+  { href: "/kategori/bot", label: "Bot" },
+  { href: "/kategori/yeni-sezon", label: "Yeni Sezon" },
   { href: "/hakkimizda", label: "Hakkımızda" },
   { href: "/#iletisim", label: "İletişim" },
 ] as const;

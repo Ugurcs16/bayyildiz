@@ -12,7 +12,7 @@ export function HeroSection({ videoUrl, posterUrl }: Props) {
   const wa = buildWhatsAppUrl(DEFAULT_PRODUCT_MESSAGE, WHATSAPP_NUMBER);
 
   return (
-    <section className="relative flex min-h-[75svh] items-end overflow-hidden sm:min-h-[85svh] sm:items-center">
+    <section className="relative flex min-h-[52svh] items-end overflow-hidden min-[480px]:min-h-[55svh] sm:min-h-[72svh] sm:items-center md:min-h-[80svh] lg:min-h-[85svh]">
       <video
         className="absolute inset-0 z-0 h-full w-full object-cover object-center"
         autoPlay
@@ -31,7 +31,7 @@ export function HeroSection({ videoUrl, posterUrl }: Props) {
         aria-hidden
       />
 
-      <div className="relative z-10 mx-auto w-full max-w-6xl px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-20 sm:px-6 sm:pb-20 sm:pt-28 md:pb-18 md:pt-24">
+      <div className="relative z-10 mx-auto w-full max-w-6xl px-4 pb-[calc(4rem+env(safe-area-inset-bottom))] pt-14 sm:px-6 sm:pb-20 sm:pt-28 md:pb-18 md:pt-24">
         <div className="max-w-2xl">
           <p className="font-display text-xs font-semibold uppercase tracking-[0.28em] text-[var(--color-gold-soft)] sm:text-sm">
             Bayyıldız Ayakkabı

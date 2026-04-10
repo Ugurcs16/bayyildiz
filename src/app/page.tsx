@@ -1,4 +1,5 @@
 import { HeroSection } from "@/components/home/HeroSection";
+import { HomeCategoryStrip } from "@/components/home/HomeCategoryStrip";
 import { HomeCatalog } from "@/components/home/HomeCatalog";
 import {
   SITE_DESCRIPTION,
@@ -34,6 +35,7 @@ export default function HomePage() {
         }}
       />
       <HeroSection videoUrl="/hero-video.mp4" />
+      <HomeCategoryStrip />
       <HomeCatalog products={products} />
       <section
         aria-label="Öne çıkan vaatler"

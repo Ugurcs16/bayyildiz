@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { WHATSAPP_NUMBER } from "@/lib/constants";
 import {
@@ -65,7 +66,7 @@ export function CatalogProductPurchase({
 
   useEffect(() => {
     if (!toast) return;
-    const id = window.setTimeout(() => setToast(null), 3200);
+    const id = window.setTimeout(() => setToast(null), 12000);
     return () => window.clearTimeout(id);
   }, [toast]);
 
@@ -252,6 +253,12 @@ export function CatalogProductPurchase({
         >
           {primaryLabel}
         </button>
+        <Link
+          href="/sepet"
+          className="text-center text-sm font-medium text-[var(--color-espresso)] underline decoration-black/15 underline-offset-4 transition hover:decoration-[var(--color-espresso)]"
+        >
+          Sepeti görüntüle
+        </Link>
         <p className="text-center text-[0.7rem] leading-relaxed text-[var(--color-taupe-muted)] sm:text-xs">
           Aynı gün kargo · Güvenli ödeme · Kolay değişim
         </p>
@@ -265,7 +272,7 @@ export function CatalogProductPurchase({
         </a>
       </div>
 
-      <SalesToast message={toast} />
+      <SalesToast message={toast} showCartActions={Boolean(toast)} />
     </>
   );
 }

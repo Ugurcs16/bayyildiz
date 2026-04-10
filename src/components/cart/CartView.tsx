@@ -20,10 +20,10 @@ export function CartView() {
           Beğendiğiniz modeli seçip numaranızı ekleyerek devam edin.
         </p>
         <Link
-          href="/#one-cikanlar"
+          href="/"
           className="mt-8 inline-flex min-h-12 items-center justify-center rounded-full bg-[var(--color-espresso)] px-8 text-sm font-semibold text-white shadow-[0_10px_32px_-14px_rgba(0,0,0,0.45)] transition hover:bg-[var(--color-espresso-hover)]"
         >
-          Modellere göz at
+          Alışverişe dön
         </Link>
       </div>
     );
@@ -31,6 +31,14 @@ export function CartView() {
 
   return (
     <div className="space-y-8">
+      <div className="flex justify-center sm:justify-start">
+        <Link
+          href="/"
+          className="inline-flex min-h-11 items-center justify-center rounded-full border border-black/12 bg-white px-5 text-sm font-semibold text-[var(--color-espresso)] shadow-sm transition hover:border-black/20 hover:bg-[var(--color-cream)]"
+        >
+          Alışverişe devam et
+        </Link>
+      </div>
       <ul className="flex flex-col gap-4">
         {items.map((line) => {
           const lineSum = (Number.parseFloat(line.price) || 0) * line.quantity;
