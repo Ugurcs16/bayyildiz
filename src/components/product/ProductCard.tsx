@@ -50,7 +50,7 @@ export function ProductCard({ product }: { product: CatalogProduct }) {
         />
       </div>
 
-      <div className="flex flex-1 flex-col p-5">
+      <div className="flex flex-1 flex-col p-3">
         <h3 className="font-display text-lg font-semibold leading-snug text-[var(--color-espresso)]">
           <Link href={`/urun/${product.slug}`} className="hover:underline">
             {product.name}
@@ -66,7 +66,7 @@ export function ProductCard({ product }: { product: CatalogProduct }) {
           {stockLabel(product.stock)}
         </p>
 
-        <div className="mt-4 flex flex-wrap items-baseline gap-2 border-t border-black/[0.06] pt-4">
+        <div className="mt-3 flex flex-wrap items-baseline gap-2 border-t border-black/[0.06] pt-3">
           <span className="font-display text-xl font-semibold text-[var(--color-espresso)]">
             {formatPrice(product.price)}
           </span>
@@ -77,17 +77,17 @@ export function ProductCard({ product }: { product: CatalogProduct }) {
           ) : null}
         </div>
 
-        <p className="mt-4 rounded-xl border border-black/[0.06] bg-[var(--color-cream)]/50 px-3 py-2.5 text-sm leading-relaxed text-[var(--color-anthracite-soft)]">
+        <p className="mt-3 rounded-xl border border-black/[0.06] bg-[var(--color-cream)]/50 px-3 py-2 text-sm leading-relaxed text-[var(--color-anthracite-soft)]">
           <span className="mb-1 block text-sm font-semibold text-[var(--color-espresso)]">
             Kısa bilgi
           </span>
-          {product.teaser}
+          <span className="mt-1 block line-clamp-2 overflow-hidden">{product.teaser}</span>
         </p>
 
-        <div className="mt-5 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+        <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
           <Link
             href={`/urun/${product.slug}`}
-            className="inline-flex min-h-11 items-center justify-center rounded-full border border-black/[0.08] bg-white px-4 text-sm font-semibold text-[var(--color-espresso)] transition-colors hover:border-black/15"
+            className="inline-flex min-h-10 items-center justify-center rounded-full border border-black/[0.08] bg-white px-3 text-xs font-semibold text-[var(--color-espresso)] transition-colors hover:border-black/15"
           >
             Ürünü incele
           </Link>
@@ -95,7 +95,7 @@ export function ProductCard({ product }: { product: CatalogProduct }) {
             href={wa}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex min-h-11 items-center justify-center rounded-full border border-emerald-800/20 bg-emerald-50/90 text-sm font-semibold text-emerald-900 transition-colors hover:bg-emerald-100/90"
+            className="flex min-h-10 items-center justify-center rounded-full border border-emerald-800/20 bg-emerald-50/90 text-xs font-semibold text-emerald-900 transition-colors hover:bg-emerald-100/90"
           >
             {"WhatsApp"}
           </a>
@@ -104,7 +104,7 @@ export function ProductCard({ product }: { product: CatalogProduct }) {
         <button
           type="button"
           disabled={out}
-          className="mt-2.5 min-h-11 w-full rounded-full bg-[var(--color-espresso)] text-sm font-semibold text-[var(--color-ivory)] transition-colors hover:bg-[var(--color-espresso-hover)] disabled:cursor-not-allowed disabled:opacity-45"
+          className="mt-2 min-h-10 w-full rounded-full bg-[var(--color-espresso)] text-xs font-semibold text-[var(--color-ivory)] transition-colors hover:bg-[var(--color-espresso-hover)] disabled:cursor-not-allowed disabled:opacity-45"
         >
           {out ? "Stokta yok" : "Sepete ekle (yakında)"}
         </button>

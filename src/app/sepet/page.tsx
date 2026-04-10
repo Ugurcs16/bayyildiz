@@ -6,7 +6,7 @@ import { buildWhatsAppUrl, DEFAULT_PRODUCT_MESSAGE } from "@/lib/whatsapp";
 
 export const metadata: Metadata = {
   title: "Sepet",
-  description: `${SITE_NAME} sepetiniz — WooCommerce ile güvenli ödeme.`,
+  description: `${SITE_NAME} alışveriş sepetiniz — ödeme adımına geçmeden önce kalemlerinizi gözden geçirin.`,
 };
 
 export default function CartPage() {
@@ -17,9 +17,9 @@ export default function CartPage() {
       <h1 className="text-3xl font-semibold tracking-tight text-[var(--color-espresso)] sm:text-4xl">
         Sepet
       </h1>
-      <p className="mt-3 text-sm text-[var(--color-anthracite-soft)] sm:text-base">
-        Sepetiniz bu cihazda saklanır. Ödeme için WooCommerce mağazanızdaki sepet
-        akışını kullanın; takıldığınız yerde WhatsApp&apos;tan yazmanız yeterli.
+      <p className="mt-3 max-w-xl text-sm leading-relaxed text-[var(--color-anthracite-soft)] sm:text-base">
+        Kalemlerinizi kontrol edin; ödemeye geçtiğinizde adres bilgilerinizi
+        paylaşırsınız. İsterseniz WhatsApp ile de sipariş verebilirsiniz.
       </p>
       <div className="mt-10">
         <CartView />

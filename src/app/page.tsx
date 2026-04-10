@@ -34,9 +34,10 @@ export default function HomePage() {
         }}
       />
       <HeroSection videoUrl="/hero-video.mp4" />
+      <HomeCatalog products={products} />
       <section
         aria-label="Öne çıkan vaatler"
-        className="border-b border-black/[0.06] bg-[var(--color-cream-dark)]/40 px-4 py-10 sm:px-6 sm:py-12"
+        className="border-b border-black/[0.06] bg-[var(--color-cream-dark)]/40 px-4 py-8 sm:px-6 sm:py-10"
       >
         <div className="mx-auto grid max-w-6xl gap-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
           {[
@@ -74,7 +75,6 @@ export default function HomePage() {
           ))}
         </div>
       </section>
-      <HomeCatalog products={products} />
     </>
   );
 }

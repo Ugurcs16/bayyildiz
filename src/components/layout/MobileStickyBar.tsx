@@ -8,12 +8,12 @@ export function MobileStickyBar() {
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-50 border-t border-black/10 bg-[var(--color-cream)]/98 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden">
-      <div className="mx-auto max-w-lg px-4 py-3">
+      <div className="mx-auto max-w-lg px-4 py-2">
         <a
           href={wa}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] text-sm font-semibold text-white shadow-sm"
+          className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] text-xs font-semibold text-white shadow-sm"
         >
           {"WhatsApp'tan yaz"}
         </a>

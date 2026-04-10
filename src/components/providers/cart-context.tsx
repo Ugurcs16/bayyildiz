@@ -9,17 +9,26 @@ import {
   useState,
 } from "react";
 
-const STORAGE_KEY = "bayyildiz-cart-v1";
+const STORAGE_KEY = "bayyildiz-cart-v2";
 
 export type CartLine = {
   key: string;
-  productId: number;
-  variationId?: number;
-  quantity: number;
+  /** Katalog / CMS ürün kimliği (string). */
+  productId: string;
+  /** Varyant satır kimliği (`CatalogVariation.id`); aynı ürün + aynı numara birleşimi için. */
+  variationId: string;
   name: string;
   slug: string;
+  /** Model kodu (ör. aile SKU). */
+  model: string;
+  /** Seçilen numara / beden etiketi. */
+  size: string;
+  /** Varyant SKU. */
+  variantSku: string;
   image: string;
+  /** Birim fiyat, `formatTry` ile uyumlu ondalık string. */
   price: string;
+  quantity: number;
 };
 
 type CartContextValue = {
@@ -29,12 +38,19 @@ type CartContextValue = {
   setQuantity: (key: string, quantity: number) => void;
   clear: () => void;
   totalQuantity: number;
+  subtotal: number;
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
 
-function makeKey(productId: number, variationId?: number) {
-  return `${productId}-${variationId ?? "s"}`;
+/** Aynı ürün + aynı numara (varyant) satırını birleştirmek için anahtar. */
+export function cartLineKey(productId: string, variationId: string) {
+  return `${productId}::${variationId}`;
+}
+
+function parsePrice(value: string): number {
+  const n = Number.parseFloat(value);
+  return Number.isFinite(n) ? n : 0;
 }
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
@@ -62,7 +78,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const addItem = useCallback(
     (line: Omit<CartLine, "key"> & { key?: string }) => {
-      const key = line.key ?? makeKey(line.productId, line.variationId);
+      const key = line.key ?? cartLineKey(line.productId, line.variationId);
       setItems((prev) => {
         const next = [...prev];
         const i = next.findIndex((x) => x.key === key);
@@ -98,6 +114,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     [items],
   );
 
+  const subtotal = useMemo(
+    () =>
+      items.reduce(
+        (s, x) => s + parsePrice(x.price) * x.quantity,
+        0,
+      ),
+    [items],
+  );
+
   const value = useMemo(
     () => ({
       items,
@@ -106,8 +131,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       setQuantity,
       clear,
       totalQuantity,
+      subtotal,
     }),
-    [items, addItem, removeItem, setQuantity, clear, totalQuantity],
+    [items, addItem, removeItem, setQuantity, clear, totalQuantity, subtotal],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

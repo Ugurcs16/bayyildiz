@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import { WHATSAPP_NUMBER } from "@/lib/constants";
-import { buildAddToCartUrl } from "@/lib/cart-url";
 import { buildWhatsAppUrl, productWhatsAppMessage } from "@/lib/whatsapp";
 import type { WCProduct, WCVariation } from "@/lib/types/woocommerce";
 import { formatTry, stockLabel } from "@/lib/woocommerce";
@@ -47,22 +46,23 @@ export function ProductPurchasePanel({
   const thumb = product.images[0]?.src ?? "";
 
   const handleAddToCart = () => {
-    const targetId =
-      selectable && selected ? selected.id : product.id;
+    if ((selected?.stock_status ?? product.stock_status) === "outofstock") return;
+    const variationKey = selectable && selected ? String(selected.id) : `simple-${product.id}`;
     addItem({
-      productId: product.id,
-      variationId: selectable && selected ? selected.id : undefined,
+      productId: String(product.id),
+      variationId: variationKey,
       quantity: qty,
       name: product.name,
       slug: product.slug,
+      model: product.sku || String(product.id),
+      size: selectable && selected ? variationLabel(selected) : "Standart",
+      variantSku: product.sku
+        ? `${product.sku}-${selected?.id ?? "std"}`
+        : String(selected?.id ?? product.id),
       image: thumb,
       price: displayPrice,
     });
-    const url = buildAddToCartUrl(targetId, qty);
-    if (url) window.location.assign(url);
   };
-
-  const wooConfigured = Boolean(buildAddToCartUrl(product.id, 1));
 
   return (
     <div className="flex flex-col gap-6">
@@ -145,12 +145,6 @@ export function ProductPurchasePanel({
         >
           Sepete Ekle
         </button>
-        {!wooConfigured ? (
-          <p className="text-center text-xs text-[var(--color-anthracite-soft)]">
-            WooCommerce mağaza adresini (.env) ekleyerek gerçek sepete yönlendirme
-            açılır.
-          </p>
-        ) : null}
         <a
           href={wa}
           target="_blank"

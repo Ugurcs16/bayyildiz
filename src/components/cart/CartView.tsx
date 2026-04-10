@@ -3,124 +3,185 @@
 import Image from "next/image";
 import Link from "next/link";
 import { PLACEHOLDER_PRODUCT_IMAGE } from "@/lib/constants";
-import { buildAddToCartUrl } from "@/lib/cart-url";
 import { useCart } from "@/components/providers/cart-context";
 import { formatTry } from "@/lib/woocommerce";
 
 export function CartView() {
-  const { items, removeItem, setQuantity, clear, totalQuantity } = useCart();
+  const { items, removeItem, setQuantity, clear, totalQuantity, subtotal } =
+    useCart();
 
   if (items.length === 0) {
     return (
-      <div className="rounded-2xl border border-black/8 bg-white/90 p-10 text-center shadow-sm">
-        <p className="text-[var(--color-anthracite-soft)]">
-          Sepetiniz boş. Koleksiyonlarımızdan model ekleyebilirsiniz.
+      <div className="rounded-3xl border border-black/[0.07] bg-gradient-to-b from-white to-[var(--color-cream-dark)]/30 px-6 py-14 text-center shadow-sm sm:px-10">
+        <p className="font-display text-lg text-[var(--color-espresso)] sm:text-xl">
+          Sepetiniz henüz boş
+        </p>
+        <p className="mx-auto mt-2 max-w-sm text-sm text-[var(--color-anthracite-soft)]">
+          Beğendiğiniz modeli seçip numaranızı ekleyerek devam edin.
         </p>
         <Link
           href="/#one-cikanlar"
-          className="mt-6 inline-flex min-h-12 items-center justify-center rounded-xl bg-[var(--color-espresso)] px-6 text-sm font-semibold text-white"
+          className="mt-8 inline-flex min-h-12 items-center justify-center rounded-full bg-[var(--color-espresso)] px-8 text-sm font-semibold text-white shadow-[0_10px_32px_-14px_rgba(0,0,0,0.45)] transition hover:bg-[var(--color-espresso-hover)]"
         >
-          Alışverişe başla
+          Modellere göz at
         </Link>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <ul className="flex flex-col gap-4">
         {items.map((line) => {
-          const wcUrl = buildAddToCartUrl(
-            line.variationId ?? line.productId,
-            line.quantity,
-          );
+          const lineSum = (Number.parseFloat(line.price) || 0) * line.quantity;
           return (
             <li
               key={line.key}
-              className="flex gap-4 rounded-2xl border border-black/8 bg-white/95 p-4 shadow-sm"
+              className="overflow-hidden rounded-2xl border border-black/[0.08] bg-white/95 shadow-sm"
             >
-              <Link
-                href={`/urun/${line.slug}`}
-                className="relative h-28 w-24 shrink-0 overflow-hidden rounded-xl bg-[var(--color-cream-dark)]"
-              >
-                <Image
-                  src={line.image || PLACEHOLDER_PRODUCT_IMAGE}
-                  alt={line.name}
-                  fill
-                  className="object-cover"
-                  sizes="96px"
-                />
-              </Link>
-              <div className="flex min-w-0 flex-1 flex-col">
+              <div className="flex gap-4 p-4 sm:gap-5 sm:p-5">
                 <Link
                   href={`/urun/${line.slug}`}
-                  className="font-semibold text-[var(--color-espresso)] hover:underline"
+                  className="relative h-28 w-24 shrink-0 overflow-hidden rounded-xl bg-[var(--color-cream-dark)] ring-1 ring-black/[0.06] sm:h-32 sm:w-28"
                 >
-                  {line.name}
-                </Link>
-                <p className="mt-1 text-sm text-[var(--color-anthracite-soft)]">
-                  {formatTry(line.price)} × {line.quantity}
-                </p>
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <label className="sr-only" htmlFor={`qty-${line.key}`}>
-                    Adet
-                  </label>
-                  <input
-                    id={`qty-${line.key}`}
-                    type="number"
-                    min={1}
-                    max={99}
-                    value={line.quantity}
-                    onChange={(e) =>
-                      setQuantity(line.key, Math.max(1, Number(e.target.value) || 1))
-                    }
-                    className="w-16 rounded-lg border border-black/15 px-2 py-1 text-center text-sm"
+                  <Image
+                    src={line.image || PLACEHOLDER_PRODUCT_IMAGE}
+                    alt={line.name}
+                    fill
+                    className="object-cover"
+                    sizes="112px"
                   />
+                </Link>
+                <div className="flex min-w-0 flex-1 flex-col">
+                  <Link
+                    href={`/urun/${line.slug}`}
+                    className="font-semibold leading-snug text-[var(--color-espresso)] hover:underline"
+                  >
+                    {line.name}
+                  </Link>
+                  <dl className="mt-2 grid gap-1 text-xs text-[var(--color-anthracite-soft)] sm:text-[0.8125rem]">
+                    <div className="flex flex-wrap gap-x-4 gap-y-0.5">
+                      <div>
+                        <dt className="sr-only">Model</dt>
+                        <dd>
+                          <span className="text-[var(--color-taupe-muted)]">Model</span>{" "}
+                          <span className="font-medium text-[var(--color-anthracite)]">
+                            {line.model}
+                          </span>
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="sr-only">Numara</dt>
+                        <dd>
+                          <span className="text-[var(--color-taupe-muted)]">Numara</span>{" "}
+                          <span className="font-medium text-[var(--color-anthracite)]">
+                            {line.size}
+                          </span>
+                        </dd>
+                      </div>
+                    </div>
+                    <div>
+                      <dt className="sr-only">SKU</dt>
+                      <dd>
+                        <span className="text-[var(--color-taupe-muted)]">SKU</span>{" "}
+                        <span className="font-mono text-[0.7rem] font-medium tracking-wide text-[var(--color-anthracite)] sm:text-xs">
+                          {line.variantSku}
+                        </span>
+                      </dd>
+                    </div>
+                  </dl>
+                  <p className="mt-3 text-sm text-[var(--color-anthracite-soft)]">
+                    Birim: {formatTry(line.price)}
+                  </p>
+                  <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center gap-1 rounded-xl border border-black/10 bg-[var(--color-cream)]/50 p-0.5">
+                      <button
+                        type="button"
+                        className="flex h-9 w-9 items-center justify-center rounded-lg text-lg font-medium text-[var(--color-espresso)] transition-colors hover:bg-white"
+                        disabled={line.quantity <= 1}
+                        onClick={() =>
+                          setQuantity(line.key, Math.max(1, line.quantity - 1))
+                        }
+                        aria-label="Adet azalt"
+                      >
+                        −
+                      </button>
+                      <span className="min-w-[2.25rem] text-center text-sm font-semibold tabular-nums text-[var(--color-espresso)]">
+                        {line.quantity}
+                      </span>
+                      <button
+                        type="button"
+                        className="flex h-9 w-9 items-center justify-center rounded-lg text-lg font-medium text-[var(--color-espresso)] transition-colors hover:bg-white"
+                        onClick={() =>
+                          setQuantity(
+                            line.key,
+                            Math.min(99, line.quantity + 1),
+                          )
+                        }
+                        aria-label="Adet artır"
+                      >
+                        +
+                      </button>
+                    </div>
+                    <p className="text-base font-semibold tabular-nums text-[var(--color-espresso)]">
+                      {formatTry(String(lineSum))}
+                    </p>
+                  </div>
                   <button
                     type="button"
                     onClick={() => removeItem(line.key)}
-                    className="text-sm font-medium text-red-700/90 underline"
+                    className="mt-3 self-start text-xs font-medium text-red-800/85 underline-offset-4 hover:underline sm:text-sm"
                   >
                     Kaldır
                   </button>
                 </div>
-                {wcUrl ? (
-                  <a
-                    href={wcUrl}
-                    className="mt-3 inline-flex min-h-10 items-center justify-center rounded-lg bg-[var(--color-espresso)] px-4 text-xs font-semibold text-white sm:text-sm"
-                  >
-                    WooCommerce&apos;de bu kalemi sepete aktar
-                  </a>
-                ) : (
-                  <p className="mt-2 text-xs text-[var(--color-anthracite-soft)]">
-                    Mağaza URL&apos;si tanımlı değil; WhatsApp ile sipariş
-                    verebilirsiniz.
-                  </p>
-                )}
               </div>
             </li>
           );
         })}
       </ul>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-[var(--color-anthracite-soft)]">
-          Toplam adet:{" "}
-          <span className="font-semibold text-[var(--color-espresso)]">
-            {totalQuantity}
+
+      <div className="rounded-2xl border border-black/[0.1] bg-[var(--color-cream-dark)]/50 p-6 shadow-inner">
+        <div className="flex items-center justify-between text-sm text-[var(--color-anthracite-soft)]">
+          <span>Ara toplam</span>
+          <span className="font-semibold tabular-nums text-[var(--color-espresso)]">
+            {formatTry(String(subtotal))}
           </span>
-        </p>
+        </div>
+        <div className="mt-4 flex items-center justify-between border-t border-black/10 pt-4">
+          <div>
+            <p className="text-lg font-semibold text-[var(--color-espresso)]">
+              Toplam
+            </p>
+            <p className="mt-0.5 text-xs text-[var(--color-anthracite-soft)]">
+              {totalQuantity} ürün
+            </p>
+          </div>
+          <p className="text-2xl font-semibold tabular-nums tracking-tight text-[var(--color-espresso)]">
+            {formatTry(String(subtotal))}
+          </p>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-4 sm:flex-row-reverse sm:items-center sm:justify-between">
+        <Link
+          href="/odeme"
+          className="inline-flex min-h-[3.25rem] flex-1 items-center justify-center rounded-full bg-[var(--color-espresso)] px-8 text-base font-semibold text-white shadow-[0_12px_36px_-14px_rgba(0,0,0,0.45)] transition hover:bg-[var(--color-espresso-hover)] sm:max-w-sm sm:flex-none"
+        >
+          Ödemeye geç
+        </Link>
         <button
           type="button"
           onClick={() => clear()}
-          className="text-sm font-medium text-[var(--color-taupe-muted)] underline"
+          className="text-center text-sm font-medium text-[var(--color-taupe-muted)] underline-offset-4 hover:underline sm:text-left"
         >
           Sepeti temizle
         </button>
       </div>
-      <p className="rounded-xl border border-black/8 bg-[var(--color-cream-dark)]/50 p-4 text-sm text-[var(--color-anthracite-soft)]">
-        Ödeme WooCommerce üzerinden tamamlanır. Her satırdaki düğme ilgili ürünü
-        klasik <code className="rounded bg-black/5 px-1">add-to-cart</code>{" "}
-        akışıyla mağaza sepetinize ekler.
+
+      <p className="rounded-xl border border-black/8 bg-white/60 px-4 py-3 text-center text-xs text-[var(--color-anthracite-soft)]">
+        Sepet bu cihazda saklanır. Ödeme adımında teslimat bilgilerinizi
+        paylaşın.
       </p>
     </div>
   );

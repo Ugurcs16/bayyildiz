@@ -12,7 +12,7 @@ export function HeroSection({ videoUrl, posterUrl }: Props) {
   const wa = buildWhatsAppUrl(DEFAULT_PRODUCT_MESSAGE, WHATSAPP_NUMBER);
 
   return (
-    <section className="relative flex min-h-[100svh] items-end overflow-hidden sm:items-center">
+    <section className="relative flex min-h-[75svh] items-end overflow-hidden sm:min-h-[85svh] sm:items-center">
       <video
         className="absolute inset-0 z-0 h-full w-full object-cover object-center"
         autoPlay
@@ -31,7 +31,7 @@ export function HeroSection({ videoUrl, posterUrl }: Props) {
         aria-hidden
       />
 
-      <div className="relative z-10 mx-auto w-full max-w-6xl px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-28 sm:px-6 sm:pb-24 sm:pt-32 md:pb-20 md:pt-28">
+      <div className="relative z-10 mx-auto w-full max-w-6xl px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-20 sm:px-6 sm:pb-20 sm:pt-28 md:pb-18 md:pt-24">
         <div className="max-w-2xl">
           <p className="font-display text-xs font-semibold uppercase tracking-[0.28em] text-[var(--color-gold-soft)] sm:text-sm">
             Bayyıldız Ayakkabı
@@ -46,7 +46,7 @@ export function HeroSection({ videoUrl, posterUrl }: Props) {
           <p className="mt-3 text-sm font-medium text-white/80 sm:text-base">
             Hakiki deri · El işçiliği · İki mağaza Bursa
           </p>
-          <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+          <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
             <Link
               href="/#urunler"
               className="group inline-flex min-h-[3.25rem] min-w-[200px] items-center justify-center rounded-full bg-[var(--color-ivory)] px-8 text-sm font-semibold tracking-wide text-[var(--color-espresso)] shadow-[0_8px_32px_rgba(0,0,0,0.2)] ring-1 ring-black/5 transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-[0_12px_40px_rgba(0,0,0,0.28)]"
