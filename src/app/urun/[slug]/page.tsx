@@ -1,8 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { SITE_DESCRIPTION } from "@/lib/constants";
+import { SITE_NAME } from "@/lib/constants";
 import { CATEGORIES } from "@/lib/dummy";
+import {
+  buildProductJsonLd,
+  buildProductMetaDescription,
+  buildProductSeoTitle,
+} from "@/lib/product-seo";
 import { CatalogProductGallery } from "@/components/product/CatalogProductGallery";
 import { CatalogProductPurchase } from "@/components/product/CatalogProductPurchase";
 import { ProductDetailSections } from "@/components/product/ProductDetailSections";
@@ -13,14 +18,27 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const product = getCatalogProductBySlug(slug);
   if (!product) return { title: "Ürün bulunamadı" };
-  const desc = product.seoDescription ?? product.teaser;
+  const title = buildProductSeoTitle(product);
+  const description = buildProductMetaDescription(product);
+  const path = `/urun/${slug}`;
+  const ogImages = product.image ? [{ url: product.image }] : [];
   return {
-    title: product.name,
-    description: desc || SITE_DESCRIPTION,
+    title,
+    description,
+    alternates: { canonical: path },
     openGraph: {
-      title: product.name,
-      description: desc || SITE_DESCRIPTION,
-      images: product.image ? [{ url: product.image }] : [],
+      type: "website",
+      title,
+      description,
+      url: path,
+      siteName: SITE_NAME,
+      images: ogImages,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: ogImages.length ? [ogImages[0].url] : undefined,
     },
   };
 }
@@ -39,8 +57,14 @@ export default async function ProductPage({ params }: Props) {
     CATEGORIES.find((c) => c.id === product.category)?.title ??
     String(product.category);
 
+  const jsonLd = buildProductJsonLd(product, product.price);
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <div className="border-b border-black/8 bg-[var(--color-cream-dark)]/40">
         <div className="mx-auto max-w-6xl px-4 py-4 text-sm text-[var(--color-anthracite-soft)] sm:px-6">
           <Link href="/" className="hover:text-[var(--color-espresso)]">
@@ -67,15 +91,15 @@ export default async function ProductPage({ params }: Props) {
           <ul className="mt-5 flex flex-col gap-2 rounded-2xl border border-black/8 bg-[var(--color-cream)]/55 px-4 py-3.5 text-xs text-[var(--color-anthracite-soft)] sm:text-sm">
             <li className="flex items-start gap-2.5">
               <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--color-gold-soft)]" />
-              Hakiki deri, Bursa’dan gönderim
+              Hakiki deri
             </li>
             <li className="flex items-start gap-2.5">
               <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--color-gold-soft)]" />
-              Mağazada gördüğünüz kalite
+              Bursa mağaza güvencesi
             </li>
             <li className="flex items-start gap-2.5">
               <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--color-gold-soft)]" />
-              Uygun bedende kolay değişim
+              Kolay değişim
             </li>
           </ul>
 

@@ -25,11 +25,27 @@ export const metadata: Metadata = {
     template: `%s | ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
+  keywords: [
+    "erkek ayakkabı",
+    "hakiki deri ayakkabı",
+    "Bursa ayakkabı",
+    "deri ayakkabı",
+    "Bayyıldız",
+  ],
   applicationName: SITE_NAME,
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
     type: "website",
     locale: "tr_TR",
+    url: "/",
     siteName: SITE_NAME,
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
+  },
+  twitter: {
+    card: "summary_large_image",
     title: SITE_NAME,
     description: SITE_DESCRIPTION,
   },

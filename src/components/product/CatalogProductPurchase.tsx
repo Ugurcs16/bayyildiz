@@ -122,7 +122,7 @@ export function CatalogProductPurchase({
 
   return (
     <>
-      <h1 className="font-display mt-1 text-3xl font-semibold tracking-tight text-[var(--color-espresso)] sm:mt-2 sm:text-4xl">
+      <h1 className="font-display mt-1 line-clamp-3 text-3xl font-semibold tracking-tight text-[var(--color-espresso)] sm:mt-2 sm:line-clamp-none sm:text-4xl">
         {product.name}
       </h1>
 
@@ -133,6 +133,27 @@ export function CatalogProductPurchase({
           maximumFractionDigits: 0,
         }).format(displayPrice)}
       </p>
+
+      <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-[0.7rem] leading-snug text-[var(--color-taupe-muted)] sm:text-xs">
+        <li className="flex items-center gap-1.5">
+          <span className="text-[var(--color-gold-soft)]" aria-hidden>
+            ✓
+          </span>
+          Ücretsiz kargo
+        </li>
+        <li className="flex items-center gap-1.5">
+          <span className="text-[var(--color-gold-soft)]" aria-hidden>
+            ✓
+          </span>
+          Aynı gün kargo
+        </li>
+        <li className="flex items-center gap-1.5">
+          <span className="text-[var(--color-gold-soft)]" aria-hidden>
+            ✓
+          </span>
+          Kolay değişim
+        </li>
+      </ul>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
         {product.stock === "var" ? (
@@ -201,6 +222,9 @@ export function CatalogProductPurchase({
               {selected?.sku ?? product.code}
             </span>
           </p>
+          <p className="mt-2.5 text-[0.65rem] leading-snug text-[var(--color-taupe-muted)] sm:text-[0.7rem]">
+            Bugün sipariş verirsen yarın kargoda
+          </p>
         </div>
       </div>
 
@@ -259,16 +283,13 @@ export function CatalogProductPurchase({
         >
           Sepeti görüntüle
         </Link>
-        <p className="text-center text-[0.7rem] leading-relaxed text-[var(--color-taupe-muted)] sm:text-xs">
-          Aynı gün kargo · Güvenli ödeme · Kolay değişim
-        </p>
         <a
           href={wa}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex min-h-12 items-center justify-center rounded-full border border-black/10 bg-white px-6 text-sm font-semibold text-[var(--color-espresso)] shadow-sm transition-colors hover:bg-[var(--color-cream)]"
         >
-          WhatsApp ile yazın
+          Numara için WhatsApp&apos;tan sor
         </a>
       </div>
 

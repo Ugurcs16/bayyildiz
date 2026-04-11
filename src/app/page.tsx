@@ -10,7 +10,20 @@ import { getCatalogProducts } from "@/lib/products-normalizer";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
+  title: { absolute: SITE_NAME },
   description: SITE_DESCRIPTION,
+  alternates: { canonical: "/" },
+  openGraph: {
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
+    url: "/",
+    siteName: SITE_NAME,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
+  },
 };
 
 const organizationJsonLd = {

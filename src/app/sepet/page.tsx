@@ -4,9 +4,24 @@ import { CartView } from "@/components/cart/CartView";
 import { SITE_NAME, WHATSAPP_NUMBER } from "@/lib/constants";
 import { buildWhatsAppUrl, DEFAULT_PRODUCT_MESSAGE } from "@/lib/whatsapp";
 
+const desc = `${SITE_NAME} alışveriş sepetiniz — ödeme adımına geçmeden önce kalemlerinizi gözden geçirin.`;
+
 export const metadata: Metadata = {
   title: "Sepet",
-  description: `${SITE_NAME} alışveriş sepetiniz — ödeme adımına geçmeden önce kalemlerinizi gözden geçirin.`,
+  description: desc,
+  alternates: { canonical: "/sepet" },
+  robots: { index: false, follow: false },
+  openGraph: {
+    title: "Sepet",
+    description: desc,
+    url: "/sepet",
+    siteName: SITE_NAME,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Sepet",
+    description: desc,
+  },
 };
 
 export default function CartPage() {

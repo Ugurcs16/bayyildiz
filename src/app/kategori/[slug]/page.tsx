@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ProductCard } from "@/components/product/ProductCard";
-import { CATEGORY_QUICK, SITE_DESCRIPTION } from "@/lib/constants";
+import { CATEGORY_QUICK, SITE_NAME } from "@/lib/constants";
+import { getCategorySeoIntro } from "@/lib/product-seo";
 import { getCatalogProducts } from "@/lib/products-normalizer";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -13,9 +14,25 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const cat = CATEGORY_QUICK.find((c) => c.slug === slug);
   const title = cat?.title ?? slug;
+  const intro = getCategorySeoIntro(slug);
+  const pageTitle = `${title} Erkek Ayakkabı`;
+  const path = `/kategori/${slug}`;
   return {
-    title: `${title} Erkek Ayakkabı`,
-    description: `${title} kategorisinde hakiki deri erkek ayakkabı modelleri. ${SITE_DESCRIPTION}`,
+    title: pageTitle,
+    description: intro.metaDescription,
+    alternates: { canonical: path },
+    openGraph: {
+      type: "website",
+      title: pageTitle,
+      description: intro.metaDescription,
+      url: path,
+      siteName: SITE_NAME,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: pageTitle,
+      description: intro.metaDescription,
+    },
   };
 }
 
@@ -25,6 +42,7 @@ export default async function CategoryPage({ params }: Props) {
 
   const cat = CATEGORY_QUICK.find((c) => c.slug === slug)!;
   const products = getCatalogProducts().filter((p) => p.category === slug);
+  const seo = getCategorySeoIntro(slug);
 
   return (
     <div>
@@ -37,12 +55,17 @@ export default async function CategoryPage({ params }: Props) {
           <span className="text-[var(--color-espresso)]">{cat.title}</span>
         </div>
       </div>
-      <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
-        <h1 className="text-3xl font-semibold tracking-tight text-[var(--color-espresso)] sm:text-4xl">
-          {cat.title}
-        </h1>
-          <p className="mt-3 max-w-2xl text-sm text-[var(--color-anthracite-soft)] sm:text-base">
-            {cat.subtitle}. Bu sayfa vitrin amaçlı örnek ürünleri gösterir.
+      <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
+        <div className="max-w-2xl">
+          <h2 className="text-lg font-semibold tracking-tight text-[var(--color-espresso)] sm:text-xl">
+            {seo.heading}
+          </h2>
+          <p className="mt-2 text-sm leading-relaxed text-[var(--color-anthracite-soft)]">
+            {seo.text}
+          </p>
+        </div>
+        <p className="mt-6 text-xs text-[var(--color-taupe-muted)]">
+          {cat.subtitle}
         </p>
         {products.length === 0 ? (
           <p className="mt-12 text-center text-sm text-[var(--color-anthracite-soft)]">
