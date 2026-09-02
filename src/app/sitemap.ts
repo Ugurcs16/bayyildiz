@@ -1,8 +1,12 @@
 import type { MetadataRoute } from "next";
 import { CATEGORY_QUICK, SITE_URL } from "@/lib/constants";
-import { getCatalogProducts } from "@/lib/products-normalizer";
+import { listAllCatalogProductsForSitemap } from "@/lib/catalog-source";
 
-const STATIC_PATHS: { path: string; priority: number; changeFrequency: MetadataRoute.Sitemap[0]["changeFrequency"] }[] = [
+const STATIC_PATHS: {
+  path: string;
+  priority: number;
+  changeFrequency: MetadataRoute.Sitemap[0]["changeFrequency"];
+}[] = [
   { path: "/hakkimizda", priority: 0.6, changeFrequency: "monthly" },
   { path: "/iletisim", priority: 0.6, changeFrequency: "monthly" },
   { path: "/gizlilik-politikasi", priority: 0.4, changeFrequency: "yearly" },
@@ -12,7 +16,7 @@ const STATIC_PATHS: { path: string; priority: number; changeFrequency: MetadataR
   { path: "/gizlilik", priority: 0.35, changeFrequency: "yearly" },
 ];
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = SITE_URL.replace(/\/$/, "");
   const now = new Date();
 
@@ -30,7 +34,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.8,
   }));
 
-  const products = getCatalogProducts().map((p) => ({
+  const { products: catalog } = await listAllCatalogProductsForSitemap();
+  const products: MetadataRoute.Sitemap = catalog.map((p) => ({
     url: `${base}/urun/${p.slug}`,
     lastModified: now,
     changeFrequency: "weekly" as const,

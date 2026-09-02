@@ -13,22 +13,24 @@ const STORAGE_KEY = "bayyildiz-cart-v2";
 
 export type CartLine = {
   key: string;
-  /** Katalog / CMS ürün kimliği (string). */
+  /** Tervona / katalog ürün kimliği. */
   productId: string;
-  /** Varyant satır kimliği (`CatalogVariation.id`); aynı ürün + aynı numara birleşimi için. */
+  /** Tervona varyant kimliği. */
   variationId: string;
   name: string;
   slug: string;
   /** Model kodu (ör. aile SKU). */
   model: string;
-  /** Seçilen numara / beden etiketi. */
+  /** Seçilen numara / beden. */
   size: string;
   /** Varyant SKU. */
   variantSku: string;
   image: string;
-  /** Birim fiyat, `formatTry` ile uyumlu ondalık string. */
+  /** Birim fiyat, ondalık string. */
   price: string;
   quantity: number;
+  /** Son bilinen canlı stok tavanı (Tervona availableStock). */
+  availableStock?: number;
 };
 
 type CartContextValue = {
@@ -36,6 +38,7 @@ type CartContextValue = {
   addItem: (line: Omit<CartLine, "key"> & { key?: string }) => void;
   removeItem: (key: string) => void;
   setQuantity: (key: string, quantity: number) => void;
+  replaceItems: (items: CartLine[]) => void;
   clear: () => void;
   totalQuantity: number;
   subtotal: number;
@@ -43,7 +46,6 @@ type CartContextValue = {
 
 const CartContext = createContext<CartContextValue | null>(null);
 
-/** Aynı ürün + aynı numara (varyant) satırını birleştirmek için anahtar. */
 export function cartLineKey(productId: string, variationId: string) {
   return `${productId}::${variationId}`;
 }
@@ -51,6 +53,12 @@ export function cartLineKey(productId: string, variationId: string) {
 function parsePrice(value: string): number {
   const n = Number.parseFloat(value);
   return Number.isFinite(n) ? n : 0;
+}
+
+function clampQty(qty: number, availableStock?: number): number {
+  const base = Math.max(0, Math.floor(qty));
+  if (availableStock == null) return base;
+  return Math.min(base, Math.max(0, availableStock));
 }
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
@@ -83,13 +91,20 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         const next = [...prev];
         const i = next.findIndex((x) => x.key === key);
         if (i >= 0) {
+          const mergedQty = next[i].quantity + line.quantity;
+          const cap = line.availableStock ?? next[i].availableStock;
           next[i] = {
             ...next[i],
-            quantity: next[i].quantity + line.quantity,
+            ...line,
+            key,
+            availableStock: cap,
+            quantity: clampQty(mergedQty, cap),
           };
           return next;
         }
-        return [...next, { ...line, key }];
+        const qty = clampQty(line.quantity, line.availableStock);
+        if (qty <= 0) return prev;
+        return [...next, { ...line, key, quantity: qty }];
       });
     },
     [],
@@ -102,9 +117,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const setQuantity = useCallback((key: string, quantity: number) => {
     setItems((prev) =>
       prev
-        .map((x) => (x.key === key ? { ...x, quantity } : x))
+        .map((x) =>
+          x.key === key
+            ? { ...x, quantity: clampQty(quantity, x.availableStock) }
+            : x,
+        )
         .filter((x) => x.quantity > 0),
     );
+  }, []);
+
+  const replaceItems = useCallback((next: CartLine[]) => {
+    setItems(next);
   }, []);
 
   const clear = useCallback(() => setItems([]), []);
@@ -115,11 +138,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   );
 
   const subtotal = useMemo(
-    () =>
-      items.reduce(
-        (s, x) => s + parsePrice(x.price) * x.quantity,
-        0,
-      ),
+    () => items.reduce((s, x) => s + parsePrice(x.price) * x.quantity, 0),
     [items],
   );
 
@@ -129,11 +148,21 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       addItem,
       removeItem,
       setQuantity,
+      replaceItems,
       clear,
       totalQuantity,
       subtotal,
     }),
-    [items, addItem, removeItem, setQuantity, clear, totalQuantity, subtotal],
+    [
+      items,
+      addItem,
+      removeItem,
+      setQuantity,
+      replaceItems,
+      clear,
+      totalQuantity,
+      subtotal,
+    ],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

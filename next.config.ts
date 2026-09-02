@@ -11,6 +11,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "bayyildiz.com",
       },
+      {
+        protocol: "https",
+        hostname: "www.bayyildiz.com",
+      },
     ],
   },
 };

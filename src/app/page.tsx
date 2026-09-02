@@ -6,7 +6,7 @@ import {
   SITE_NAME,
   SITE_URL,
 } from "@/lib/constants";
-import { getCatalogProducts } from "@/lib/products-normalizer";
+import { listCatalogProducts } from "@/lib/catalog-source";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -36,8 +36,13 @@ const organizationJsonLd = {
   priceRange: "$$",
 };
 
-export default function HomePage() {
-  const products = getCatalogProducts();
+export default async function HomePage() {
+  const featured = await listCatalogProducts({
+    sort: "featured",
+    page: 1,
+    limit: 12,
+  });
+  const catalogLink = "/kategori/gunluk";
 
   return (
     <>
@@ -49,7 +54,7 @@ export default function HomePage() {
       />
       <HeroSection videoUrl="/hero-video.mp4" />
       <HomeCategoryStrip />
-      <HomeCatalog products={products} />
+      <HomeCatalog products={featured.products} catalogHref={catalogLink} />
       <section
         aria-label="Öne çıkan vaatler"
         className="border-b border-black/[0.06] bg-[var(--color-cream-dark)]/40 px-4 py-8 sm:px-6 sm:py-10"

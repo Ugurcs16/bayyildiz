@@ -17,6 +17,8 @@ export type CatalogProduct = DummyProduct & {
   categoriesText: string;
   images: string[];
   variations: CatalogVariation[];
+  /** Variable-row SKU chosen as the storefront card identity (most images). */
+  representativeParentSku?: string;
 };
 
 const CATEGORY_LABEL_BY_ID: Record<CategoryId, string> = {
@@ -213,6 +215,7 @@ function normalizeFromCsv(rows: CsvRow[]): CatalogProduct[] {
       categoriesText: categoryText || CATEGORY_LABEL_BY_ID[category],
       images,
       variations: dedupedVariations,
+      representativeParentSku: sku,
     } satisfies CatalogProduct;
   });
 }

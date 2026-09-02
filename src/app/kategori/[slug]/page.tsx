@@ -3,12 +3,16 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ProductCard } from "@/components/product/ProductCard";
 import { CATEGORY_QUICK, SITE_NAME } from "@/lib/constants";
+import { listCatalogProducts } from "@/lib/catalog-source";
 import { getCategorySeoIntro } from "@/lib/product-seo";
-import { getCatalogProducts } from "@/lib/products-normalizer";
 
-type Props = { params: Promise<{ slug: string }> };
+type Props = {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ page?: string }>;
+};
 
 const VALID_SLUGS = CATEGORY_QUICK.map((c) => c.slug);
+const PAGE_SIZE = 24;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
@@ -36,12 +40,21 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function CategoryPage({ params }: Props) {
+export default async function CategoryPage({ params, searchParams }: Props) {
   const { slug } = await params;
   if (!(VALID_SLUGS as readonly string[]).includes(slug)) notFound();
 
+  const sp = await searchParams;
+  const pageRaw = Number.parseInt(sp.page ?? "1", 10);
+  const page = Number.isFinite(pageRaw) && pageRaw > 0 ? pageRaw : 1;
+
   const cat = CATEGORY_QUICK.find((c) => c.slug === slug)!;
-  const products = getCatalogProducts().filter((p) => p.category === slug);
+  const list = await listCatalogProducts({
+    category: slug,
+    page,
+    limit: PAGE_SIZE,
+    sort: "featured",
+  });
   const seo = getCategorySeoIntro(slug);
 
   return (
@@ -66,20 +79,51 @@ export default async function CategoryPage({ params }: Props) {
         </div>
         <p className="mt-6 text-xs text-[var(--color-taupe-muted)]">
           {cat.subtitle}
+          {list.total > 0
+            ? ` · ${list.total} model · sayfa ${list.page}/${list.pageCount}`
+            : null}
         </p>
-        {products.length === 0 ? (
+        {list.products.length === 0 ? (
           <p className="mt-12 text-center text-sm text-[var(--color-anthracite-soft)]">
-            Bu kategoride şu an ürün bulunmuyor. WhatsApp'tan stok sorabilirsiniz.
+            Bu kategoride şu an ürün bulunmuyor. WhatsApp&apos;tan stok
+            sorabilirsiniz.
           </p>
         ) : (
           <ul className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {products.map((p) => (
+            {list.products.map((p, index) => (
               <li key={p.id}>
-                <ProductCard product={p} />
+                <ProductCard product={p} imagePriority={index < 4} />
               </li>
             ))}
           </ul>
         )}
+
+        {list.pageCount > 1 ? (
+          <nav
+            className="mt-12 flex flex-wrap items-center justify-center gap-3"
+            aria-label="Sayfalama"
+          >
+            {list.page > 1 ? (
+              <Link
+                href={`/kategori/${slug}?page=${list.page - 1}`}
+                className="inline-flex min-h-11 items-center rounded-full border border-black/10 bg-white px-5 text-sm font-semibold text-[var(--color-espresso)]"
+              >
+                Önceki
+              </Link>
+            ) : null}
+            <span className="text-sm text-[var(--color-anthracite-soft)]">
+              {list.page} / {list.pageCount}
+            </span>
+            {list.page < list.pageCount ? (
+              <Link
+                href={`/kategori/${slug}?page=${list.page + 1}`}
+                className="inline-flex min-h-11 items-center rounded-full border border-black/10 bg-white px-5 text-sm font-semibold text-[var(--color-espresso)]"
+              >
+                Sonraki
+              </Link>
+            ) : null}
+          </nav>
+        ) : null}
       </section>
     </div>
   );

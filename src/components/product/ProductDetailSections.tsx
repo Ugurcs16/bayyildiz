@@ -1,17 +1,21 @@
 import Link from "next/link";
 import { ProductCard } from "@/components/product/ProductCard";
-import {
-  getCatalogProducts,
-  type CatalogProduct,
-} from "@/lib/products-normalizer";
+import { listCatalogProducts } from "@/lib/catalog-source";
+import type { CatalogProduct } from "@/lib/products-normalizer";
 
 export async function ProductDetailSections({
   product,
 }: {
   product: CatalogProduct;
 }) {
-  const similar = getCatalogProducts()
-    .filter((item) => item.id !== product.id)
+  const related = await listCatalogProducts({
+    category: product.category,
+    page: 1,
+    limit: 8,
+    sort: "featured",
+  });
+  const similar = related.products
+    .filter((item) => item.id !== product.id && item.slug !== product.slug)
     .slice(0, 4);
 
   return (

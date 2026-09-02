@@ -2,13 +2,65 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { PLACEHOLDER_PRODUCT_IMAGE } from "@/lib/constants";
 import { useCart } from "@/components/providers/cart-context";
 import { formatTry } from "@/lib/woocommerce";
 
 export function CartView() {
-  const { items, removeItem, setQuantity, clear, totalQuantity, subtotal } =
-    useCart();
+  const {
+    items,
+    removeItem,
+    setQuantity,
+    clear,
+    replaceItems,
+    totalQuantity,
+    subtotal,
+  } = useCart();
+  const router = useRouter();
+  const [validating, setValidating] = useState(false);
+  const [messages, setMessages] = useState<string[]>([]);
+
+  const handleCheckout = async () => {
+    setValidating(true);
+    setMessages([]);
+    try {
+      const res = await fetch("/api/cart/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items }),
+      });
+      const data = (await res.json()) as {
+        ok?: boolean;
+        items?: typeof items;
+        issues?: { message: string }[];
+        skipped?: boolean;
+      };
+      if (Array.isArray(data.items)) {
+        replaceItems(data.items);
+      }
+      const notes = (data.issues ?? []).map((i) => i.message).filter(Boolean);
+      if (notes.length) setMessages(notes);
+      if (data.ok || data.skipped) {
+        router.push("/odeme");
+        return;
+      }
+      if ((data.items?.length ?? 0) === 0) {
+        setMessages((prev) =>
+          prev.length
+            ? prev
+            : ["Sepetinizdeki ürünler stokta kalmadığı için güncellendi."],
+        );
+      }
+    } catch {
+      setMessages([
+        "Stok kontrolü yapılamadı. Lütfen bağlantınızı kontrol edip tekrar deneyin.",
+      ]);
+    } finally {
+      setValidating(false);
+    }
+  };
 
   if (items.length === 0) {
     return (
@@ -19,6 +71,13 @@ export function CartView() {
         <p className="mx-auto mt-2 max-w-sm text-sm text-[var(--color-anthracite-soft)]">
           Beğendiğiniz modeli seçip numaranızı ekleyerek devam edin.
         </p>
+        {messages.length > 0 ? (
+          <ul className="mx-auto mt-4 max-w-md space-y-1 text-sm text-amber-900">
+            {messages.map((m) => (
+              <li key={m}>{m}</li>
+            ))}
+          </ul>
+        ) : null}
         <Link
           href="/"
           className="mt-8 inline-flex min-h-12 items-center justify-center rounded-full bg-[var(--color-espresso)] px-8 text-sm font-semibold text-white shadow-[0_10px_32px_-14px_rgba(0,0,0,0.45)] transition hover:bg-[var(--color-espresso-hover)]"
@@ -39,9 +98,17 @@ export function CartView() {
           Alışverişe devam et
         </Link>
       </div>
+      {messages.length > 0 ? (
+        <ul className="space-y-2 rounded-xl border border-amber-200/80 bg-amber-50/90 px-4 py-3 text-sm text-amber-950">
+          {messages.map((m) => (
+            <li key={m}>{m}</li>
+          ))}
+        </ul>
+      ) : null}
       <ul className="flex flex-col gap-4">
         {items.map((line) => {
           const lineSum = (Number.parseFloat(line.price) || 0) * line.quantity;
+          const maxQty = line.availableStock ?? 99;
           return (
             <li
               key={line.key}
@@ -72,7 +139,9 @@ export function CartView() {
                       <div>
                         <dt className="sr-only">Model</dt>
                         <dd>
-                          <span className="text-[var(--color-taupe-muted)]">Model</span>{" "}
+                          <span className="text-[var(--color-taupe-muted)]">
+                            Model
+                          </span>{" "}
                           <span className="font-medium text-[var(--color-anthracite)]">
                             {line.model}
                           </span>
@@ -81,7 +150,9 @@ export function CartView() {
                       <div>
                         <dt className="sr-only">Numara</dt>
                         <dd>
-                          <span className="text-[var(--color-taupe-muted)]">Numara</span>{" "}
+                          <span className="text-[var(--color-taupe-muted)]">
+                            Numara
+                          </span>{" "}
                           <span className="font-medium text-[var(--color-anthracite)]">
                             {line.size}
                           </span>
@@ -91,7 +162,9 @@ export function CartView() {
                     <div>
                       <dt className="sr-only">SKU</dt>
                       <dd>
-                        <span className="text-[var(--color-taupe-muted)]">SKU</span>{" "}
+                        <span className="text-[var(--color-taupe-muted)]">
+                          SKU
+                        </span>{" "}
                         <span className="font-mono text-[0.7rem] font-medium tracking-wide text-[var(--color-anthracite)] sm:text-xs">
                           {line.variantSku}
                         </span>
@@ -120,10 +193,11 @@ export function CartView() {
                       <button
                         type="button"
                         className="flex h-9 w-9 items-center justify-center rounded-lg text-lg font-medium text-[var(--color-espresso)] transition-colors hover:bg-white"
+                        disabled={line.quantity >= maxQty}
                         onClick={() =>
                           setQuantity(
                             line.key,
-                            Math.min(99, line.quantity + 1),
+                            Math.min(maxQty, line.quantity + 1),
                           )
                         }
                         aria-label="Adet artır"
@@ -172,12 +246,14 @@ export function CartView() {
       </div>
 
       <div className="flex flex-col gap-4 sm:flex-row-reverse sm:items-center sm:justify-between">
-        <Link
-          href="/odeme"
-          className="inline-flex min-h-[3.25rem] flex-1 items-center justify-center rounded-full bg-[var(--color-espresso)] px-8 text-base font-semibold text-white shadow-[0_12px_36px_-14px_rgba(0,0,0,0.45)] transition hover:bg-[var(--color-espresso-hover)] sm:max-w-sm sm:flex-none"
+        <button
+          type="button"
+          onClick={() => void handleCheckout()}
+          disabled={validating}
+          className="inline-flex min-h-[3.25rem] flex-1 items-center justify-center rounded-full bg-[var(--color-espresso)] px-8 text-base font-semibold text-white shadow-[0_12px_36px_-14px_rgba(0,0,0,0.45)] transition hover:bg-[var(--color-espresso-hover)] disabled:opacity-60 sm:max-w-sm sm:flex-none"
         >
-          Ödemeye geç
-        </Link>
+          {validating ? "Stok kontrol ediliyor…" : "Ödemeye geç"}
+        </button>
         <button
           type="button"
           onClick={() => clear()}
@@ -188,8 +264,7 @@ export function CartView() {
       </div>
 
       <p className="rounded-xl border border-black/8 bg-white/60 px-4 py-3 text-center text-xs text-[var(--color-anthracite-soft)]">
-        Sepet bu cihazda saklanır. Ödeme adımında teslimat bilgilerinizi
-        paylaşın.
+        Sepet bu cihazda saklanır. Ödemeye geçmeden önce stok doğrulanır.
       </p>
     </div>
   );

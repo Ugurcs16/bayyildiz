@@ -1,9 +1,14 @@
-"use client";
-
+import Link from "next/link";
 import { ProductCard } from "@/components/product/ProductCard";
 import type { CatalogProduct } from "@/lib/products-normalizer";
 
-export function HomeCatalog({ products }: { products: CatalogProduct[] }) {
+type Props = {
+  products: CatalogProduct[];
+  /** Tam katalog girişi (ör. en dolu kategori sayfası). */
+  catalogHref: string;
+};
+
+export function HomeCatalog({ products, catalogHref }: Props) {
   return (
     <section
       id="urunler"
@@ -13,15 +18,15 @@ export function HomeCatalog({ products }: { products: CatalogProduct[] }) {
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="font-display text-3xl font-semibold tracking-tight text-[var(--color-espresso)] sm:text-4xl">
-              Seçilmiş modeller
+              Öne çıkan modeller
             </h2>
             <p className="mt-2 max-w-xl text-sm leading-relaxed text-[var(--color-anthracite-soft)] sm:text-base">
-              Örnek vitrin; fiyat ve stok bilgisi tanıtım amaçlıdır. Sipariş
-              ve stok için mağaza veya WhatsApp ile iletişime geçebilirsiniz.
+              Vitrinden seçilmiş modeller. Tüm koleksiyon için kategorilere
+              göz atın veya ürün detayından numara seçerek sepete ekleyin.
             </p>
           </div>
-          <p className="text-sm font-semibold text-[var(--color-espresso)]/80">
-            {products.length} model gösteriliyor
+          <p className="text-sm font-medium text-[var(--color-taupe-muted)]">
+            Vitrin seçkisi
           </p>
         </div>
         {products.length === 0 ? (
@@ -29,13 +34,23 @@ export function HomeCatalog({ products }: { products: CatalogProduct[] }) {
             Şu an listelenecek ürün yok.
           </p>
         ) : (
-          <ul className="mt-8 grid grid-cols-2 gap-4 sm:mt-10 sm:grid-cols-3 lg:grid-cols-4">
-            {products.map((p) => (
-              <li key={p.id}>
-                <ProductCard product={p} />
-              </li>
-            ))}
-          </ul>
+          <>
+            <ul className="mt-8 grid grid-cols-2 gap-4 sm:mt-10 sm:grid-cols-3 lg:grid-cols-4">
+              {products.map((p, index) => (
+                <li key={p.id}>
+                  <ProductCard product={p} imagePriority={index < 4} />
+                </li>
+              ))}
+            </ul>
+            <div className="mt-10 flex justify-center">
+              <Link
+                href={catalogHref}
+                className="inline-flex min-h-12 items-center justify-center rounded-full border border-black/10 bg-white px-8 text-sm font-semibold text-[var(--color-espresso)] shadow-sm transition hover:border-black/20 hover:bg-[var(--color-cream)]"
+              >
+                Tüm modelleri gör
+              </Link>
+            </div>
+          </>
         )}
       </div>
     </section>

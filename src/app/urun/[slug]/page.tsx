@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { SITE_NAME } from "@/lib/constants";
 import { CATEGORIES } from "@/lib/dummy";
+import { getCatalogProductBySlugResolved } from "@/lib/catalog-source";
+import { getCanonicalSlugRedirect } from "@/lib/product-slug-compat";
 import {
   buildProductJsonLd,
   buildProductMetaDescription,
@@ -11,16 +13,25 @@ import {
 import { CatalogProductGallery } from "@/components/product/CatalogProductGallery";
 import { CatalogProductPurchase } from "@/components/product/CatalogProductPurchase";
 import { ProductDetailSections } from "@/components/product/ProductDetailSections";
-import { getCatalogProductBySlug } from "@/lib/products-normalizer";
+
 type Props = { params: Promise<{ slug: string }> };
+
+function redirectIfLegacySlug(slug: string): void {
+  const canonical = getCanonicalSlugRedirect(slug);
+  if (canonical) {
+    permanentRedirect(`/urun/${canonical}`);
+  }
+}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const product = getCatalogProductBySlug(slug);
-  if (!product) return { title: "Ürün bulunamadı" };
+  redirectIfLegacySlug(slug);
+  const resolved = await getCatalogProductBySlugResolved(slug);
+  if (!resolved) return { title: "Ürün bulunamadı" };
+  const { product } = resolved;
   const title = buildProductSeoTitle(product);
   const description = buildProductMetaDescription(product);
-  const path = `/urun/${slug}`;
+  const path = `/urun/${product.slug}`;
   const ogImages = product.image ? [{ url: product.image }] : [];
   return {
     title,
@@ -45,13 +56,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ProductPage({ params }: Props) {
   const { slug } = await params;
-  const product = getCatalogProductBySlug(slug);
-  if (!product) notFound();
+  redirectIfLegacySlug(slug);
+  const resolved = await getCatalogProductBySlugResolved(slug);
+  if (!resolved) notFound();
+  const { product } = resolved;
 
   const galleryImages =
     product.images.length > 0
       ? product.images
-      : [product.image, product.hoverImage].filter(Boolean) as string[];
+      : ([product.image, product.hoverImage].filter(Boolean) as string[]);
 
   const categoryLabel =
     CATEGORIES.find((c) => c.id === product.category)?.title ??

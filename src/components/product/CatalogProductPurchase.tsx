@@ -102,6 +102,7 @@ export function CatalogProductPurchase({
       image: thumb || product.image,
       price: priceString(displayPrice),
       quantity: qty,
+      availableStock: selected.stockQty,
       key: lineKey,
     });
     setToast(
