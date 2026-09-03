@@ -34,6 +34,15 @@ export default function CheckoutPage() {
       <p className="mt-3 max-w-xl text-sm leading-relaxed text-[var(--color-anthracite-soft)] sm:text-base">
         Bilgilerinizi girin; üyelik zorunlu değil. Ödeme altyapısı çok yakında.
       </p>
+      <p className="mt-3 text-sm text-[var(--color-anthracite-soft)]">
+        Zaten hesabınız var mı?{" "}
+        <Link
+          href="/giris?next=/odeme"
+          className="font-semibold text-[var(--color-espresso)] underline-offset-2 hover:underline"
+        >
+          Giriş yap
+        </Link>
+      </p>
 
       {empty ? (
         <div className="mt-10 rounded-3xl border border-black/[0.07] bg-gradient-to-b from-white to-[var(--color-cream-dark)]/30 px-6 py-12 text-center shadow-sm">

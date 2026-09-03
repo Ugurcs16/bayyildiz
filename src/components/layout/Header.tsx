@@ -106,7 +106,32 @@ function NavLink({
   );
 }
 
-export function Header() {
+function AccountHeaderButton({ signedIn }: { signedIn: boolean }) {
+  return (
+    <Link
+      href={signedIn ? "/hesabim" : "/giris"}
+      className="relative flex min-h-11 min-w-11 items-center justify-center rounded-full border border-black/10 bg-white/80 p-2 text-[var(--color-espresso)] shadow-sm transition-colors hover:bg-white"
+      aria-label={signedIn ? "Hesabım" : "Giriş yap"}
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="h-[1.15rem] w-[1.15rem]"
+        aria-hidden
+      >
+        <circle cx="12" cy="8" r="3.25" />
+        <path d="M5.5 19.2c1.6-3.1 4-4.7 6.5-4.7s4.9 1.6 6.5 4.7" />
+      </svg>
+    </Link>
+  );
+}
+
+export function Header({ signedIn }: { signedIn: boolean }) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -155,6 +180,7 @@ export function Header() {
         </nav>
 
         <div className="ml-auto flex shrink-0 items-center gap-2">
+          <AccountHeaderButton signedIn={signedIn} />
           <CartHeaderButton />
           <button
             type="button"
@@ -198,6 +224,13 @@ export function Header() {
           className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-1 overflow-y-auto px-4 py-6 sm:px-6"
           aria-label="Mobil menü"
         >
+          <Link
+            href={signedIn ? "/hesabim" : "/giris"}
+            onClick={() => setOpen(false)}
+            className="mb-2 flex min-h-12 items-center justify-between rounded-2xl border border-black/8 bg-white/90 px-4 py-3 text-base font-semibold text-[var(--color-espresso)] shadow-sm"
+          >
+            <span>{signedIn ? "Hesabım" : "Giriş yap"}</span>
+          </Link>
           <MobileSepetRow onNavigate={() => setOpen(false)} />
           {NAV_ITEMS.map((item) => (
             <NavLink
