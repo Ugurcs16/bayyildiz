@@ -76,6 +76,3 @@ export const STORES = [
 /** Deri / erkek ayakkabı vitrin atmosferi (Pexels). */
 export const DEFAULT_HERO_VIDEO =
   "https://videos.pexels.com/video-files/4927864/4927864-hd_1920_1080_24fps.mp4";
-
-export const DEFAULT_HERO_POSTER =
-  "https://images.unsplash.com/photo-1614252369475-531eba835eb1?w=1920&q=80";

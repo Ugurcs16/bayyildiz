@@ -5,26 +5,22 @@ const CATEGORIES = [
   {
     title: "Günlük",
     href: "/kategori/gunluk",
-    image:
-      "https://images.unsplash.com/photo-1614252369475-531eba835eb1?w=480&q=80&auto=format&fit=crop",
+    image: "/categories/gunluk.webp",
   },
   {
     title: "Klasik",
     href: "/kategori/klasik",
-    image:
-      "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=480&q=80&auto=format&fit=crop",
+    image: "/categories/klasik.webp",
   },
   {
     title: "Outdoor",
     href: "/kategori/outdoor",
-    image:
-      "https://images.unsplash.com/photo-1460353581641-37baddab0fa2?w=480&q=80&auto=format&fit=crop",
+    image: "/categories/outdoor.webp",
   },
   {
     title: "Bot",
     href: "/kategori/bot",
-    image:
-      "https://images.unsplash.com/photo-1608256246200-53e635b5b65f?w=480&q=80&auto=format&fit=crop",
+    image: "/categories/bot.webp",
   },
 ] as const;
 

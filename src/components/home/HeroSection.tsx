@@ -1,37 +1,23 @@
-import Image from "next/image";
 import Link from "next/link";
-import { DEFAULT_HERO_POSTER, WHATSAPP_NUMBER } from "@/lib/constants";
+import { WHATSAPP_NUMBER } from "@/lib/constants";
 import { buildWhatsAppUrl, DEFAULT_PRODUCT_MESSAGE } from "@/lib/whatsapp";
 
 type Props = {
   videoUrl: string;
-  posterUrl?: string;
 };
 
-export function HeroSection({ videoUrl, posterUrl }: Props) {
-  const poster = posterUrl ?? DEFAULT_HERO_POSTER;
+export function HeroSection({ videoUrl }: Props) {
   const wa = buildWhatsAppUrl(DEFAULT_PRODUCT_MESSAGE, WHATSAPP_NUMBER);
 
   return (
     <section className="relative z-0 flex min-h-[52svh] items-end overflow-hidden min-[480px]:min-h-[55svh] sm:min-h-[72svh] sm:items-center md:min-h-[80svh] lg:min-h-[85svh]">
-      {/* Mobil: yalnızca poster — video DOM'da yok */}
-      <Image
-        src={poster}
-        alt="Deri ayakkabı ve mağaza atmosferi"
-        fill
-        priority
-        className="object-cover object-center md:hidden"
-        sizes="100vw"
-      />
-      {/* md+: arka plan videosu */}
       <video
-        className="absolute inset-0 z-0 hidden h-full w-full object-cover object-center md:block"
+        className="absolute inset-0 z-0 h-full w-full object-cover object-center"
         autoPlay
         muted
         loop
         playsInline
         preload="metadata"
-        poster={poster}
         aria-label="Deri ayakkabı ve mağaza atmosferi"
       >
         <source src={videoUrl} type="video/mp4" />
