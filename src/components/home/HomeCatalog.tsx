@@ -35,7 +35,7 @@ export function HomeCatalog({ products, catalogHref }: Props) {
           </p>
         ) : (
           <>
-            <ul className="mt-8 grid grid-cols-2 gap-4 sm:mt-10 sm:grid-cols-3 lg:grid-cols-4">
+            <ul className="mt-8 grid grid-cols-2 gap-4 sm:mt-10 lg:grid-cols-4">
               {products.map((p, index) => (
                 <li key={p.id}>
                   <ProductCard product={p} imagePriority={index < 4} />
@@ -47,7 +47,7 @@ export function HomeCatalog({ products, catalogHref }: Props) {
                 href={catalogHref}
                 className="inline-flex min-h-12 items-center justify-center rounded-full border border-black/10 bg-white px-8 text-sm font-semibold text-[var(--color-espresso)] shadow-sm transition hover:border-black/20 hover:bg-[var(--color-cream)]"
               >
-                Tüm modelleri gör
+                Günlük modelleri gör
               </Link>
             </div>
           </>

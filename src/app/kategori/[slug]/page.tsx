@@ -89,7 +89,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
             sorabilirsiniz.
           </p>
         ) : (
-          <ul className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <ul className="mt-8 grid grid-cols-2 gap-3 sm:mt-10 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 lg:gap-5">
             {list.products.map((p, index) => (
               <li key={p.id}>
                 <ProductCard product={p} imagePriority={index < 4} />

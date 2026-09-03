@@ -81,14 +81,7 @@ export function ProductCard({ product, imagePriority = false }: Props) {
           ) : null}
         </div>
 
-        <p className="mt-3 rounded-xl border border-black/[0.06] bg-[var(--color-cream)]/50 px-3 py-2 text-sm leading-relaxed text-[var(--color-anthracite-soft)]">
-          <span className="mb-1 block text-sm font-semibold text-[var(--color-espresso)]">
-            Kısa bilgi
-          </span>
-          <span className="mt-1 block line-clamp-2 overflow-hidden">{product.teaser}</span>
-        </p>
-
-        <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
           <Link
             href={`/urun/${product.slug}`}
             className="inline-flex min-h-10 items-center justify-center rounded-full bg-[var(--color-espresso)] px-3 text-xs font-semibold text-white transition-colors hover:bg-[var(--color-espresso-hover)]"
