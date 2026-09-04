@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { CartClearOnPaid } from "@/components/checkout/CartClearOnPaid";
+import { loadCheckoutResult } from "@/lib/checkout/load-result";
 import { SITE_NAME, WHATSAPP_NUMBER } from "@/lib/constants";
 import { hasCustomerSessionCookie } from "@/lib/customer/session-cookie";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
@@ -10,26 +12,6 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
   alternates: { canonical: "/odeme/sonuc" },
 };
-
-type PaymentHint = "paid" | "failed" | "pending" | "unknown";
-
-function parsePaymentHint(value: string | string[] | undefined): PaymentHint {
-  const raw = Array.isArray(value) ? value[0] : value;
-  if (raw === "paid" || raw === "failed" || raw === "pending") {
-    return raw;
-  }
-  return "unknown";
-}
-
-/** Display-only order reference. Never used for payment mutation. */
-function sanitizeOrderReference(value: string | string[] | undefined): string | null {
-  const raw = Array.isArray(value) ? value[0] : value;
-  if (!raw) return null;
-  const trimmed = raw.trim();
-  if (!trimmed || trimmed.length > 64) return null;
-  if (!/^[A-Za-z0-9._\-/#]+$/.test(trimmed)) return null;
-  return trimmed;
-}
 
 function primaryButtonClass() {
   return "inline-flex min-h-12 items-center justify-center rounded-xl bg-[var(--color-espresso)] px-6 text-sm font-semibold text-white transition hover:bg-[var(--color-espresso-hover)]";
@@ -45,13 +27,16 @@ export default async function PaymentResultPage({
   searchParams: Promise<{ payment?: string | string[]; order?: string | string[] }>;
 }) {
   const params = await searchParams;
-  const payment = parsePaymentHint(params.payment);
-  const orderRef = sanitizeOrderReference(params.order);
+  const result = await loadCheckoutResult({
+    queryOrder: params.order,
+    queryPayment: params.payment,
+  });
   const signedIn = await hasCustomerSessionCookie();
+  const kind = result.kind;
 
   const wa = buildWhatsAppUrl(
-    orderRef
-      ? `Merhaba, ${orderRef} sipariş numarası için ödeme konusunda yardım istiyorum.`
+    result.orderNumber
+      ? `Merhaba, ${result.orderNumber} sipariş numarası için ödeme konusunda yardım istiyorum.`
       : "Merhaba, ödeme konusunda yardım istiyorum.",
     WHATSAPP_NUMBER,
   );
@@ -60,17 +45,17 @@ export default async function PaymentResultPage({
   let body: string;
   let accent: string;
 
-  if (payment === "paid") {
+  if (kind === "paid") {
     title = "Ödemeniz alındı";
     body =
       "Ödemeniz başarıyla alındı. Siparişiniz hazırlanmaya başlayacak. Onay e-postası veya SMS kısa süre içinde iletilebilir.";
     accent = "border-emerald-200/80 bg-emerald-50/70";
-  } else if (payment === "failed") {
+  } else if (kind === "failed") {
     title = "Ödeme tamamlanamadı";
     body =
       "Siparişiniz için ödeme başarıyla alınamadı. Kartınızdan tahsilat yapılmış gibi görünmez; emin değilseniz bankanızla veya bizimle iletişime geçebilirsiniz.";
     accent = "border-red-200/80 bg-red-50/70";
-  } else if (payment === "pending") {
+  } else if (kind === "pending") {
     title = "Ödeme kontrol ediliyor";
     body =
       "Ödeme onayı henüz tamamlanmamış olabilir. Birkaç dakika içinde sipariş durumunuz güncellenebilir. Lütfen şu an başarı olarak değerlendirmeyin.";
@@ -78,12 +63,13 @@ export default async function PaymentResultPage({
   } else {
     title = "Ödeme durumu doğrulanamadı";
     body =
-      "Bu sayfadaki bilgiler yalnızca yönlendirme amacıyla gösterilir. Ödeme durumunu kesinleştiremiyoruz. Siparişlerinizi kontrol edin veya bizimle iletişime geçin.";
+      "Bu sayfa ödeme sonucunu yalnızca Tervona kaydına bakarak gösterir. Siparişinize erişilemedi. Adres çubuğundaki payment parametresi dikkate alınmaz.";
     accent = "border-black/[0.08] bg-white/80";
   }
 
   return (
     <article className="mx-auto w-full max-w-lg px-4 py-14 sm:px-6 sm:py-20">
+      <CartClearOnPaid orderId={result.orderId} paid={kind === "paid"} />
       <div className={`rounded-2xl border px-5 py-6 sm:px-6 sm:py-7 ${accent}`}>
         <p className="text-[0.65rem] font-semibold uppercase tracking-wider text-[var(--color-taupe-muted)]">
           Ödeme sonucu
@@ -94,33 +80,27 @@ export default async function PaymentResultPage({
         <p className="mt-4 text-sm leading-relaxed text-[var(--color-anthracite-soft)] sm:text-base">
           {body}
         </p>
-        {orderRef ? (
+        {result.orderNumber && kind !== "unknown" ? (
           <p className="mt-5 text-sm text-[var(--color-anthracite)]">
             Sipariş referansı:{" "}
             <span className="font-semibold tabular-nums text-[var(--color-espresso)]">
-              {orderRef}
+              {result.orderNumber}
             </span>
           </p>
         ) : null}
-        <p className="mt-4 text-xs leading-relaxed text-[var(--color-taupe-muted)]">
-          Bu sayfa yalnızca bilgilendirme amaçlıdır; ödeme durumu banka ve ödeme
-          altyapısı tarafından doğrulanır.
-        </p>
       </div>
 
       <div className="mt-8 flex flex-col gap-3">
-        {payment === "failed" ? (
+        {kind === "failed" ? (
           <Link href="/odeme" className={primaryButtonClass()}>
             Ödemeye geri dön
           </Link>
         ) : null}
 
-        {signedIn || payment === "paid" || payment === "pending" ? (
+        {signedIn && kind !== "unknown" ? (
           <Link
             href="/hesabim/siparisler"
-            className={
-              payment === "failed" ? secondaryButtonClass() : primaryButtonClass()
-            }
+            className={kind === "failed" ? secondaryButtonClass() : primaryButtonClass()}
           >
             Siparişlerim
           </Link>
@@ -129,15 +109,13 @@ export default async function PaymentResultPage({
         <Link
           href="/"
           className={
-            payment === "failed" || signedIn || payment === "paid" || payment === "pending"
-              ? secondaryButtonClass()
-              : primaryButtonClass()
+            kind === "failed" || signedIn ? secondaryButtonClass() : primaryButtonClass()
           }
         >
           Ana Sayfa
         </Link>
 
-        {payment === "failed" || payment === "unknown" ? (
+        {kind === "failed" || kind === "unknown" ? (
           <a
             href={wa}
             target="_blank"

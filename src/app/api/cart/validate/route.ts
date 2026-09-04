@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server";
 import type { CartLine } from "@/components/providers/cart-context";
 import { revalidateCartAgainstTervona } from "@/lib/cart-revalidate";
+import { rejectCrossOrigin } from "@/lib/customer/bff";
 import { isTervonaConfigured } from "@/lib/tervona/client";
+import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
@@ -10,6 +11,9 @@ type Body = {
 };
 
 export async function POST(request: Request) {
+  const blocked = rejectCrossOrigin(request);
+  if (blocked) return blocked;
+
   let body: Body;
   try {
     body = (await request.json()) as Body;
@@ -33,7 +37,6 @@ export async function POST(request: Request) {
   }
 
   if (!isTervonaConfigured()) {
-    // Dev / misconfig: allow proceed without live check
     return NextResponse.json({
       ok: true,
       items,

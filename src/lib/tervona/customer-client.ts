@@ -10,6 +10,8 @@ export class TervonaCustomerError extends Error {
     message: string,
     readonly status: number,
     readonly remoteMessage?: string,
+    readonly code?: string,
+    readonly items?: unknown,
   ) {
     super(message);
     this.name = "TervonaCustomerError";
@@ -55,12 +57,18 @@ export async function tervonaCustomerFetch<T>(
     body?: unknown;
     sessionToken?: string | null;
     clientIp?: string;
+    idempotencyKey?: string;
+    checkoutAccess?: string | null;
+    timeoutMs?: number;
   } = {},
 ): Promise<T> {
   const root = apiRoot();
   const key = bffKey();
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
+  const timer = setTimeout(
+    () => controller.abort(),
+    init.timeoutMs ?? DEFAULT_TIMEOUT_MS,
+  );
 
   const headers: Record<string, string> = {
     Accept: "application/json",
@@ -74,6 +82,12 @@ export async function tervonaCustomerFetch<T>(
   }
   if (init.clientIp) {
     headers["X-Forwarded-For"] = init.clientIp;
+  }
+  if (init.idempotencyKey) {
+    headers["Idempotency-Key"] = init.idempotencyKey;
+  }
+  if (init.checkoutAccess) {
+    headers["X-Tervona-Checkout-Access"] = init.checkoutAccess;
   }
 
   try {
@@ -96,10 +110,13 @@ export async function tervonaCustomerFetch<T>(
     }
 
     if (!res.ok) {
+      const record = body && typeof body === "object" ? (body as Record<string, unknown>) : null;
       throw new TervonaCustomerError(
         `Tervona customer HTTP ${res.status}`,
         res.status,
         remoteErrorMessage(body),
+        typeof record?.code === "string" ? record.code : undefined,
+        record?.items,
       );
     }
 
@@ -236,5 +253,95 @@ export async function tervonaGetOrder(
   return tervonaCustomerFetch(
     `/api/storefront/customer/orders/${encodeURIComponent(id)}`,
     { sessionToken },
+  );
+}
+
+export type TervonaCreateOrderResponse = {
+  orderId: string;
+  orderNumber: string;
+  paymentStatus: string;
+  fulfillmentStatus: string;
+  amount: number;
+  currency: string;
+};
+
+export type TervonaInitializePaymentResponse = {
+  provider?: string;
+  status: string;
+  paymentPageUrl?: string;
+};
+
+export type TervonaCheckoutStatusResponse = {
+  orderId: string;
+  orderNumber: string;
+  paymentStatus: string;
+  fulfillmentStatus: string;
+  amount: number;
+  currency: string;
+};
+
+export async function tervonaCreateStorefrontOrder(input: {
+  payload: Record<string, unknown>;
+  idempotencyKey: string;
+  sessionToken?: string | null;
+  clientIp?: string;
+}): Promise<TervonaCreateOrderResponse> {
+  const body = await tervonaCustomerFetch<TervonaCreateOrderResponse>(
+    "/api/storefront/orders",
+    {
+      method: "POST",
+      body: input.payload,
+      idempotencyKey: input.idempotencyKey,
+      sessionToken: input.sessionToken,
+      clientIp: input.clientIp,
+      timeoutMs: 20_000,
+    },
+  );
+  if (!body?.orderId || !body.orderNumber) {
+    throw new TervonaCustomerError("Invalid order payload", 502);
+  }
+  return body;
+}
+
+export async function tervonaInitializeCheckoutPayment(input: {
+  orderId: string;
+  sessionToken?: string | null;
+  clientIp?: string;
+}): Promise<TervonaInitializePaymentResponse> {
+  const body = await tervonaCustomerFetch<TervonaInitializePaymentResponse>(
+    "/api/storefront/checkout/payments/initialize",
+    {
+      method: "POST",
+      body: { orderId: input.orderId },
+      sessionToken: input.sessionToken,
+      clientIp: input.clientIp,
+      timeoutMs: 25_000,
+    },
+  );
+  if (!body?.status) {
+    throw new TervonaCustomerError("Invalid payment payload", 502);
+  }
+  if ("checkoutToken" in (body as object) || "token" in (body as object)) {
+    throw new TervonaCustomerError("Unsafe payment payload", 502);
+  }
+  return {
+    provider: body.provider,
+    status: body.status,
+    paymentPageUrl: body.paymentPageUrl,
+  };
+}
+
+export async function tervonaCheckoutStatus(input: {
+  orderId: string;
+  sessionToken?: string | null;
+  checkoutAccess?: string | null;
+}): Promise<TervonaCheckoutStatusResponse> {
+  return tervonaCustomerFetch<TervonaCheckoutStatusResponse>(
+    `/api/storefront/checkout/orders/${encodeURIComponent(input.orderId)}`,
+    {
+      sessionToken: input.sessionToken,
+      checkoutAccess: input.checkoutAccess,
+      timeoutMs: 12_000,
+    },
   );
 }
