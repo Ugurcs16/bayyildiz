@@ -305,6 +305,7 @@ export async function tervonaCreateStorefrontOrder(input: {
 
 export async function tervonaInitializeCheckoutPayment(input: {
   orderId: string;
+  identityNumber: string;
   sessionToken?: string | null;
   clientIp?: string;
 }): Promise<TervonaInitializePaymentResponse> {
@@ -312,7 +313,10 @@ export async function tervonaInitializeCheckoutPayment(input: {
     "/api/storefront/checkout/payments/initialize",
     {
       method: "POST",
-      body: { orderId: input.orderId },
+      body: {
+        orderId: input.orderId,
+        identityNumber: input.identityNumber,
+      },
       sessionToken: input.sessionToken,
       clientIp: input.clientIp,
       timeoutMs: 25_000,

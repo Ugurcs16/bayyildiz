@@ -16,6 +16,7 @@ import {
   type CheckoutAccessCookie,
   type CheckoutIdempotencyCookie,
 } from "@/lib/checkout/access";
+import { resolveCheckoutIdempotencyKey } from "@/lib/checkout/idempotency-key";
 import {
   applyCheckoutAccessCookie,
   applyIdempotencyCookie,
@@ -48,6 +49,16 @@ export function checkoutErrorResponse(error: unknown): NextResponse {
       );
     }
     if (error.status === 400) {
+      const remote = (error.remoteMessage ?? "").toLowerCase();
+      if (remote.includes("identity") || remote.includes("tckn")) {
+        return bffJson(
+          {
+            error: "T.C. Kimlik No gerekli (11 haneli).",
+            code: "IDENTITY_REQUIRED",
+          },
+          400,
+        );
+      }
       return bffJson({ error: CUSTOMER_MESSAGES.invalidInput }, 400);
     }
     if (error.status === 429) {
@@ -93,24 +104,28 @@ export async function createStorefrontOrderForCheckout(input: {
     );
   }
 
-  const fingerprint = cartFingerprint(input.parsed.orderItems);
-  const existing = parseIdempotencyCookie(input.idempotencyRaw);
-  const idempotencyKey =
-    existing && existing.fingerprint === fingerprint
-      ? existing.key
-      : mintIdempotencyKey();
-  const idempotency: CheckoutIdempotencyCookie = {
+  // Authoritative IDs from revalidated cart — never size-only remapping.
+  const orderItems = stock.items.map((line) => ({
+    productId: line.productId,
+    variantId: line.variationId,
+    quantity: line.quantity,
+  }));
+
+  const fingerprint = cartFingerprint(orderItems);
+  const idempotency = resolveCheckoutIdempotencyKey({
     fingerprint,
-    key: idempotencyKey,
-  };
+    cookie: parseIdempotencyCookie(input.idempotencyRaw),
+    clientKey: input.parsed.checkoutAttemptKey,
+    mint: mintIdempotencyKey,
+  });
 
   const created = await tervonaCreateStorefrontOrder({
     payload: {
-      items: input.parsed.orderItems,
+      items: orderItems,
       customer: input.parsed.customer,
       shippingAddress: input.parsed.shippingAddress,
     },
-    idempotencyKey,
+    idempotencyKey: idempotency.key,
     sessionToken: input.sessionToken,
     clientIp: input.clientIp,
   });
@@ -134,6 +149,7 @@ export async function createStorefrontOrderForCheckout(input: {
 
 export async function initializePaymentForCheckout(input: {
   orderId: string;
+  identityNumber: string;
   sessionToken: string | null;
   clientIp?: string;
 }): Promise<
@@ -142,6 +158,7 @@ export async function initializePaymentForCheckout(input: {
 > {
   const initialized = await tervonaInitializeCheckoutPayment({
     orderId: input.orderId,
+    identityNumber: input.identityNumber,
     sessionToken: input.sessionToken,
     clientIp: input.clientIp,
   });

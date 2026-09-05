@@ -27,6 +27,16 @@ export async function POST(request: Request) {
   const parsed = parseInitializeBody(body);
   if (parsed instanceof Response) return parsed;
 
+  if (!parsed.identityNumber) {
+    return bffJson(
+      {
+        error: "T.C. Kimlik No gerekli (11 haneli).",
+        code: "IDENTITY_REQUIRED",
+      },
+      400,
+    );
+  }
+
   const cookie = await readCheckoutAccessCookie();
   const sessionToken = await readCustomerSessionToken();
   const orderId = parsed.orderId ?? cookie?.orderId;
@@ -43,6 +53,7 @@ export async function POST(request: Request) {
   try {
     const result = await initializePaymentForCheckout({
       orderId,
+      identityNumber: parsed.identityNumber,
       sessionToken,
       clientIp: trustedClientIp(request),
     });

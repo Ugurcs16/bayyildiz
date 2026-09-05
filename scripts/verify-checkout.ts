@@ -1,5 +1,15 @@
 import { createHmac } from "node:crypto";
 import { readFileSync } from "node:fs";
+import { resolveVariantByStableIds } from "../src/lib/cart-variant-identity.ts";
+import {
+  retainIdempotencyAfterInitializeFailure,
+  resolveCheckoutIdempotencyKey,
+} from "../src/lib/checkout/idempotency-key.ts";
+import {
+  isValidIdentityNumber,
+  normalizeIdentityNumber,
+  parseIdentityNumber,
+} from "../src/lib/checkout/identity-number.ts";
 import { isAllowedIyzicoCheckoutUrl } from "../src/lib/checkout/iyzico-url.ts";
 import {
   checkoutViewKindFromPaymentStatus,
@@ -16,6 +26,13 @@ function assert(condition: unknown, message: string): asserts condition {
 const ORDER_ID = "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee";
 const ORDER_NUMBER = "BY-20260904-9A610E";
 const COOKIE = { orderId: ORDER_ID, orderNumber: ORDER_NUMBER };
+
+const PRODUCT_K3 = "885c8d7b-0000-4000-8000-000000000001";
+const PRODUCT_S1 = "c3fb28dd-0000-4000-8000-000000000002";
+const VARIANT_K3_40 = "919fc9c8-0000-4000-8000-000000000040";
+const VARIANT_S1_40 = "7593648f-0000-4000-8000-000000000041";
+
+const VALID_TCKN = "10000000146";
 
 function testGuestAndAuthLookup() {
   assert(guestLookupMatchesCookie(null, COOKIE), "guest cookie without query");
@@ -98,6 +115,169 @@ function testBffSecretNotInClient() {
   }
 }
 
+/** A) Missing TCKN blocked before order/payment initialize. */
+function testMissingTcknBlocked() {
+  assert(!isValidIdentityNumber(""), "empty invalid");
+  assert(!isValidIdentityNumber("123"), "short invalid");
+  assert(!parseIdentityNumber("1234567890"), "10 digits null");
+  assert(!parseIdentityNumber("123456789012"), "12 digits null");
+  assert(!parseIdentityNumber("abcdefghijk"), "letters null");
+
+  const parseSrc = readFileSync("src/lib/checkout/parse.ts", "utf8");
+  assert(parseSrc.includes("IDENTITY_REQUIRED"), "server parse code IDENTITY_REQUIRED");
+  assert(
+    /const identityNumber = parseIdentityNumber\(body\.identityNumber\);/.test(parseSrc),
+    "place body requires identityNumber",
+  );
+  assert(
+    /if \(!identityNumber\) \{\s*return bffJson/.test(parseSrc),
+    "missing TCKN returns before order create",
+  );
+
+  const form = readFileSync("src/components/checkout/CheckoutForm.tsx", "utf8");
+  assert(
+    form.includes("if (!isValidIdentityNumber(tckn))"),
+    "client blocks submit without valid TCKN",
+  );
+}
+
+/** B) Valid TCKN reaches trusted server-side initialize payload. */
+function testValidTcknInPlacePayload() {
+  assert(
+    parseIdentityNumber(" 1000 0000 146 ") === VALID_TCKN,
+    "normalized identityNumber",
+  );
+  assert(
+    normalizeIdentityNumber("1000 0000 146") === VALID_TCKN,
+    "normalize strips spaces",
+  );
+  assert(isValidIdentityNumber(VALID_TCKN), "valid 11 digits");
+
+  const form = readFileSync("src/components/checkout/CheckoutForm.tsx", "utf8");
+  assert(form.includes("identityNumber: tckn"), "form sends identityNumber");
+  assert(form.includes("T.C. Kimlik No"), "form labels TCKN");
+  assert(!/\bconsole\.(log|info|debug)\b/.test(form), "form must not log");
+
+  const client = readFileSync("src/lib/tervona/customer-client.ts", "utf8");
+  assert(
+    /identityNumber:\s*input\.identityNumber/.test(client),
+    "initialize posts identityNumber to Tervona",
+  );
+
+  const place = readFileSync("src/lib/checkout/place.ts", "utf8");
+  assert(
+    place.includes("identityNumber: input.identityNumber"),
+    "place initialize receives identityNumber",
+  );
+}
+
+/** C) Initialize failure retains idempotency → retry reuses same key/order association. */
+function testInitializeFailureReusesOrder() {
+  const retained = retainIdempotencyAfterInitializeFailure({
+    fingerprint: "fp_same_cart",
+    createdOrderId: ORDER_ID,
+    firstKey: "cko_first_attempt_key",
+  });
+  assert(retained.reuseOnRetry === "cko_first_attempt_key", "retry reuses first key");
+  assert(retained.orderId === ORDER_ID, "same order id association");
+
+  const placeRoute = readFileSync("src/app/api/checkout/place/route.ts", "utf8");
+  assert(
+    placeRoute.includes("attachCheckoutCookies(failure, created)"),
+    "place route attaches cookies when initialize throws after order create",
+  );
+}
+
+/** D) Colorway isolation: K3 size 40 must not resolve to S1 size 40. */
+function testColorwayIsolation() {
+  const k3 = {
+    id: PRODUCT_K3,
+    variants: [
+      { id: VARIANT_K3_40, sku: "F54083-K3 - 40", size: "40" },
+      { id: "919fc9c8-0000-4000-8000-000000000039", sku: "F54083-K3 - 39", size: "39" },
+    ],
+  };
+  const s1 = {
+    id: PRODUCT_S1,
+    variants: [{ id: VARIANT_S1_40, sku: "F54083-S1 - 40", size: "40" }],
+  };
+
+  const matched = resolveVariantByStableIds(k3, {
+    productId: PRODUCT_K3,
+    variationId: VARIANT_K3_40,
+    size: "40",
+    variantSku: "F54083-K3 - 40",
+  });
+  assert(matched?.sku === "F54083-K3 - 40", "K3/40 stays K3");
+
+  const crossProduct = resolveVariantByStableIds(k3, {
+    productId: PRODUCT_S1,
+    variationId: VARIANT_S1_40,
+    size: "40",
+  });
+  assert(crossProduct === undefined, "S1 ids rejected on K3 product");
+
+  const sizeOnlyTrap = s1.variants.find((v) => v.size === "40");
+  assert(sizeOnlyTrap?.sku === "F54083-S1 - 40", "size-only would find S1 sibling");
+  const byIds = resolveVariantByStableIds(s1, {
+    productId: PRODUCT_K3,
+    variationId: VARIANT_K3_40,
+    size: "40",
+  });
+  assert(byIds === undefined, "stable ids never cross to S1 via size");
+
+  const revalidate = readFileSync("src/lib/cart-revalidate.ts", "utf8");
+  assert(
+    revalidate.includes("resolveVariantByStableIds"),
+    "cart revalidate uses stable ids",
+  );
+  assert(
+    !revalidate.includes("v.sku === line.variantSku"),
+    "SKU fallback removed (colorway risk)",
+  );
+}
+
+/** E) Near-simultaneous checkout requests with same client key → one logical order key. */
+function testDoubleSubmitSameKey() {
+  let minted = 0;
+  const mint = () => {
+    minted += 1;
+    return `cko_minted_${minted}`;
+  };
+  const fingerprint = "fp_double";
+  const clientKey = "cko_shared_double_submit_key";
+
+  const first = resolveCheckoutIdempotencyKey({
+    fingerprint,
+    cookie: null,
+    clientKey,
+    mint,
+  });
+  const second = resolveCheckoutIdempotencyKey({
+    fingerprint,
+    cookie: null,
+    clientKey,
+    mint,
+  });
+  assert(first.key === second.key, "two near-simultaneous requests share client key");
+  assert(first.key === clientKey, "client key wins before cookie");
+  assert(minted === 0, "mint not used when client key present");
+
+  const afterCookie = resolveCheckoutIdempotencyKey({
+    fingerprint,
+    cookie: first,
+    clientKey: "cko_other",
+    mint,
+  });
+  assert(afterCookie.key === clientKey, "cookie retains first key on retry");
+}
+
+function testOrphanOrdersDocumented() {
+  // Existing unpaid test orders — cleanup deferred; do not delete in this fix.
+  const orphans = ["BY-20260905-4E471B", "BY-20260905-E92782"];
+  assert(orphans.length === 2, "two orphaned unpaid live-test orders identified");
+}
+
 function main() {
   testGuestAndAuthLookup();
   testForgedPaymentQueryNeverSucceeds();
@@ -107,6 +287,12 @@ function main() {
   testStockKind();
   testHmacMatchesTervonaFormula();
   testBffSecretNotInClient();
+  testMissingTcknBlocked();
+  testValidTcknInPlacePayload();
+  testInitializeFailureReusesOrder();
+  testColorwayIsolation();
+  testDoubleSubmitSameKey();
+  testOrphanOrdersDocumented();
   console.info("bayyildiz checkout checks passed");
 }
 

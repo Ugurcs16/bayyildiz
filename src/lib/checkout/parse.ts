@@ -1,11 +1,14 @@
 import { bffError, bffJson } from "@/lib/customer/bff";
 import { CUSTOMER_MESSAGES } from "@/lib/customer/messages";
 import type { CartLine } from "@/components/providers/cart-context";
+import { parseIdentityNumber } from "@/lib/checkout/identity-number";
 
 export const CHECKOUT_BODY_MAX_BYTES = 32 * 1024;
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+const IDEMPOTENCY_KEY_RE = /^[A-Za-z0-9._:-]+$/;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -47,6 +50,14 @@ function parseUuid(value: unknown): string | null {
   return trimmed.toLowerCase();
 }
 
+export function parseCheckoutAttemptKey(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const key = value.trim();
+  if (key.length < 8 || key.length > 128) return undefined;
+  if (!IDEMPOTENCY_KEY_RE.test(key)) return undefined;
+  return key;
+}
+
 export type CheckoutPlaceInput = {
   items: CartLine[];
   orderItems: { productId: string; variantId: string; quantity: number }[];
@@ -64,6 +75,10 @@ export type CheckoutPlaceInput = {
     postalCode?: string;
     country?: string;
   };
+  /** Required 11-digit TCKN for iyzico initialize (never logged). */
+  identityNumber: string;
+  /** Optional client-generated attempt key for double-submit safety. */
+  checkoutAttemptKey?: string;
 };
 
 export function parseCheckoutPlaceBody(
@@ -124,8 +139,22 @@ export function parseCheckoutPlaceBody(
     return bffError(400);
   }
 
+  const identityNumber = parseIdentityNumber(body.identityNumber);
+  if (!identityNumber) {
+    return bffJson(
+      {
+        error: "T.C. Kimlik No gerekli (11 haneli).",
+        code: "IDENTITY_REQUIRED",
+      },
+      400,
+    );
+  }
+
   const neighborhood = requiredString(body.shippingAddress.neighborhood, 80) ?? undefined;
   const postalCode = requiredString(body.shippingAddress.postalCode, 16) ?? undefined;
+  const checkoutAttemptKey = parseCheckoutAttemptKey(
+    body.checkoutAttemptKey ?? body.idempotencyKey,
+  );
 
   return {
     items,
@@ -139,12 +168,14 @@ export function parseCheckoutPlaceBody(
       postalCode,
       country: "TR",
     },
+    identityNumber,
+    checkoutAttemptKey,
   };
 }
 
 export function parseInitializeBody(
   body: Record<string, unknown>,
-): { orderId?: string } | Response {
+): { orderId?: string; identityNumber?: string } | Response {
   if (
     body.amount !== undefined ||
     body.grandTotal !== undefined ||
@@ -153,12 +184,32 @@ export function parseInitializeBody(
   ) {
     return bffJson({ error: CUSTOMER_MESSAGES.invalidInput }, 400);
   }
+
+  let identityNumber: string | undefined;
+  if (
+    body.identityNumber !== undefined &&
+    body.identityNumber !== null &&
+    body.identityNumber !== ""
+  ) {
+    const parsed = parseIdentityNumber(body.identityNumber);
+    if (!parsed) {
+      return bffJson(
+        {
+          error: "T.C. Kimlik No gerekli (11 haneli).",
+          code: "IDENTITY_REQUIRED",
+        },
+        400,
+      );
+    }
+    identityNumber = parsed;
+  }
+
   if (body.orderId === undefined || body.orderId === null || body.orderId === "") {
-    return {};
+    return { identityNumber };
   }
   const orderId = parseUuid(body.orderId);
   if (!orderId) {
     return bffError(400);
   }
-  return { orderId };
+  return { orderId, identityNumber };
 }

@@ -1,4 +1,5 @@
 import type { CartLine } from "@/components/providers/cart-context";
+import { resolveVariantByStableIds } from "@/lib/cart-variant-identity";
 import {
   fetchStorefrontProductBySlug,
   TervonaNotFoundError,
@@ -20,14 +21,38 @@ export type CartValidationResult = {
   ok: boolean;
 };
 
-function findVariant(
-  product: StorefrontProduct,
+function variantSize(variant: StorefrontVariant): string {
+  const raw =
+    variant.size ??
+    variant.attributes?.size ??
+    variant.attributes?.Numara ??
+    "";
+  return String(raw).trim() || "Standart";
+}
+
+/**
+ * Authoritative line from Tervona product + matched variant IDs.
+ * Never copies identity from SKU/size alone.
+ */
+export function authoritativeCartLine(
   line: CartLine,
-): StorefrontVariant | undefined {
-  return (
-    product.variants.find((v) => v.id === line.variationId) ??
-    product.variants.find((v) => v.sku === line.variantSku)
-  );
+  product: StorefrontProduct,
+  variant: StorefrontVariant,
+  quantity: number,
+): CartLine {
+  return {
+    ...line,
+    productId: product.id,
+    variationId: variant.id,
+    slug: product.slug,
+    name: product.title || line.name,
+    variantSku: variant.sku || line.variantSku,
+    size: variantSize(variant),
+    price: variant.price?.amount ?? line.price,
+    availableStock: Math.max(0, variant.availableStock),
+    quantity,
+    key: `${product.id}::${variant.id}`,
+  };
 }
 
 /**
@@ -44,7 +69,15 @@ export async function revalidateCartAgainstTervona(
   for (const line of items) {
     try {
       const product = await fetchStorefrontProductBySlug(line.slug);
-      const variant = findVariant(product, line);
+      if (product.id !== line.productId) {
+        issues.push({
+          key: line.key,
+          action: "removed",
+          message: `"${line.name}" sepet kimliği ürünle uyuşmuyor ve çıkarıldı.`,
+        });
+        continue;
+      }
+      const variant = resolveVariantByStableIds(product, line);
       if (!variant || !variant.available || variant.availableStock <= 0) {
         issues.push({
           key: line.key,
@@ -55,12 +88,7 @@ export async function revalidateCartAgainstTervona(
       }
       const max = Math.max(0, variant.availableStock);
       if (line.quantity > max) {
-        next.push({
-          ...line,
-          quantity: max,
-          price: variant.price?.amount ?? line.price,
-          availableStock: max,
-        });
+        next.push(authoritativeCartLine(line, product, variant, max));
         issues.push({
           key: line.key,
           action: "reduced",
@@ -69,11 +97,7 @@ export async function revalidateCartAgainstTervona(
         });
         continue;
       }
-      next.push({
-        ...line,
-        price: variant.price?.amount ?? line.price,
-        availableStock: max,
-      });
+      next.push(authoritativeCartLine(line, product, variant, line.quantity));
     } catch (error) {
       if (error instanceof TervonaNotFoundError) {
         issues.push({

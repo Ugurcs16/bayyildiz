@@ -9,6 +9,7 @@ import {
   checkoutErrorResponse,
   createStorefrontOrderForCheckout,
   initializePaymentForCheckout,
+  type CreatedCheckoutOrder,
 } from "@/lib/checkout/place";
 import {
   checkoutClientIp,
@@ -29,9 +30,10 @@ export async function POST(request: Request) {
   const parsed = parseCheckoutPlaceBody(body);
   if (parsed instanceof Response) return parsed;
 
+  let created: CreatedCheckoutOrder | undefined;
   try {
     const existing = await readIdempotencyCookie();
-    const created = await createStorefrontOrderForCheckout({
+    const order = await createStorefrontOrderForCheckout({
       parsed,
       sessionToken: await readCustomerSessionToken(),
       clientIp: trustedClientIp(request),
@@ -39,10 +41,12 @@ export async function POST(request: Request) {
         ? `v1|${existing.fingerprint}|${existing.key}`
         : undefined,
     });
-    if (created instanceof Response) return created;
+    if (order instanceof Response) return order;
+    created = order;
 
     const paid = await initializePaymentForCheckout({
       orderId: created.orderId,
+      identityNumber: parsed.identityNumber,
       sessionToken: await readCustomerSessionToken(),
       clientIp: trustedClientIp(request),
     });
@@ -58,6 +62,11 @@ export async function POST(request: Request) {
     });
     return attachCheckoutCookies(response, created);
   } catch (error) {
-    return checkoutErrorResponse(error);
+    const failure = checkoutErrorResponse(error);
+    // Persist idempotency + access even when initialize throws (e.g. missing TCKN upstream).
+    if (created) {
+      return attachCheckoutCookies(failure, created);
+    }
+    return failure;
   }
 }

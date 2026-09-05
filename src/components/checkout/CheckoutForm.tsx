@@ -5,6 +5,14 @@ import { useEffect, useRef, useState } from "react";
 import { useCart } from "@/components/providers/cart-context";
 import type { CartLine } from "@/components/providers/cart-context";
 import type { CartValidationIssue } from "@/lib/cart-revalidate";
+import {
+  clientCartFingerprint,
+  readOrCreateCheckoutAttemptKey,
+} from "@/lib/checkout/client-idempotency";
+import {
+  isValidIdentityNumber,
+  normalizeIdentityNumber,
+} from "@/lib/checkout/identity-number";
 import { SITE_NAME } from "@/lib/constants";
 import { formatTry } from "@/lib/woocommerce";
 
@@ -33,6 +41,7 @@ export function CheckoutForm() {
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
+  const [identityNumber, setIdentityNumber] = useState("");
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
   const [district, setDistrict] = useState("");
@@ -98,13 +107,26 @@ export function CheckoutForm() {
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
     if (lock.current || submitting || empty) return;
+
+    const tckn = normalizeIdentityNumber(identityNumber);
+    if (!isValidIdentityNumber(tckn)) {
+      setError("T.C. Kimlik No 11 haneli olmalıdır.");
+      return;
+    }
+
     lock.current = true;
     setSubmitting(true);
     setError(null);
     setIssues([]);
 
+    const checkoutAttemptKey = readOrCreateCheckoutAttemptKey(
+      clientCartFingerprint(items),
+    );
+
     const payload = {
       items,
+      identityNumber: tckn,
+      checkoutAttemptKey,
       customer: {
         email,
         firstName: firstName.trim(),
@@ -226,6 +248,9 @@ export function CheckoutForm() {
                         {" "}
                         · {line.size}
                       </span>
+                      <span className="mt-0.5 block font-mono text-[0.7rem] tracking-wide text-[var(--color-taupe-muted)]">
+                        {line.variantSku}
+                      </span>
                       <span className="block text-xs text-[var(--color-taupe-muted)]">
                         × {line.quantity}
                       </span>
@@ -323,6 +348,31 @@ export function CheckoutForm() {
                     placeholder="ornek@eposta.com"
                   />
                 </div>
+              </div>
+              <div>
+                <label htmlFor="co-tckn" className="text-sm font-semibold text-[var(--color-espresso)]">
+                  T.C. Kimlik No
+                </label>
+                <input
+                  id="co-tckn"
+                  name="identityNumber"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  required
+                  maxLength={11}
+                  pattern="[0-9]{11}"
+                  value={identityNumber}
+                  onChange={(e) =>
+                    setIdentityNumber(normalizeIdentityNumber(e.target.value).slice(0, 11))
+                  }
+                  className={fieldClass}
+                  placeholder="11 haneli kimlik numarası"
+                  aria-describedby="co-tckn-hint"
+                />
+                <p id="co-tckn-hint" className="mt-2 text-xs text-[var(--color-taupe-muted)]">
+                  Ödeme sağlayıcısı için zorunludur. Sadece bu işlemde kullanılır; adreste
+                  saklanmaz.
+                </p>
               </div>
 
               <div className="border-b border-black/[0.06] pb-2 pt-2">
