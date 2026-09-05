@@ -50,7 +50,9 @@ export function CartView() {
         setMessages((prev) =>
           prev.length
             ? prev
-            : ["Sepetinizdeki ürünler stokta kalmadığı için güncellendi."],
+            : [
+                "Sepetinizdeki ürünler güncellendi veya katalog değişti. Lütfen ürünü yeniden ekleyin.",
+              ],
         );
       }
     } catch {

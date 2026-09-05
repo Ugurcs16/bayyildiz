@@ -9,7 +9,9 @@ import {
   useState,
 } from "react";
 
-const STORAGE_KEY = "bayyildiz-cart-v2";
+/** v3: identity fields must stay coherent after catalog re-imports. */
+const STORAGE_KEY = "bayyildiz-cart-v3";
+const LEGACY_STORAGE_KEYS = ["bayyildiz-cart-v2"] as const;
 
 export type CartLine = {
   key: string;
@@ -67,8 +69,35 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setItems(JSON.parse(raw) as CartLine[]);
+      let raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) {
+        for (const legacy of LEGACY_STORAGE_KEYS) {
+          const legacyRaw = localStorage.getItem(legacy);
+          if (!legacyRaw) continue;
+          raw = legacyRaw;
+          localStorage.setItem(STORAGE_KEY, legacyRaw);
+          localStorage.removeItem(legacy);
+          break;
+        }
+      }
+      if (raw) {
+        const parsed = JSON.parse(raw) as unknown;
+        if (Array.isArray(parsed)) {
+          const hydrated = parsed.filter(
+            (row): row is CartLine =>
+              Boolean(
+                row &&
+                  typeof row === "object" &&
+                  typeof (row as CartLine).productId === "string" &&
+                  typeof (row as CartLine).variationId === "string" &&
+                  typeof (row as CartLine).slug === "string",
+              ),
+          );
+          // localStorage hydrate — intentional client-only sync after mount.
+          // eslint-disable-next-line react-hooks/set-state-in-effect -- cart persistence bootstrap
+          setItems(hydrated);
+        }
+      }
     } catch {
       /* ignore */
     }

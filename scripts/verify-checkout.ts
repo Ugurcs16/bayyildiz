@@ -1,6 +1,9 @@
 import { createHmac } from "node:crypto";
 import { readFileSync } from "node:fs";
-import { resolveVariantByStableIds } from "../src/lib/cart-variant-identity.ts";
+import {
+  colorwayParentKey,
+  reconcileCartLineIdentity,
+} from "../src/lib/cart-variant-identity.ts";
 import {
   retainIdempotencyAfterInitializeFailure,
   resolveCheckoutIdempotencyKey,
@@ -192,6 +195,7 @@ function testInitializeFailureReusesOrder() {
 function testColorwayIsolation() {
   const k3 = {
     id: PRODUCT_K3,
+    slug: "bayyildiz-gunluk-ayakkabi-model-f54083-f54083-k3",
     variants: [
       { id: VARIANT_K3_40, sku: "F54083-K3 - 40", size: "40" },
       { id: "919fc9c8-0000-4000-8000-000000000039", sku: "F54083-K3 - 39", size: "39" },
@@ -199,41 +203,110 @@ function testColorwayIsolation() {
   };
   const s1 = {
     id: PRODUCT_S1,
+    slug: "bayyildiz-gunluk-ayakkabi-model-f54083-f54083-s1",
     variants: [{ id: VARIANT_S1_40, sku: "F54083-S1 - 40", size: "40" }],
   };
 
-  const matched = resolveVariantByStableIds(k3, {
+  const matched = reconcileCartLineIdentity(k3, {
     productId: PRODUCT_K3,
     variationId: VARIANT_K3_40,
     size: "40",
     variantSku: "F54083-K3 - 40",
+    model: "F54083-K3",
   });
-  assert(matched?.sku === "F54083-K3 - 40", "K3/40 stays K3");
+  assert(matched.status === "ok", "K3/40 reconciles");
+  assert(matched.status === "ok" && matched.variant.sku === "F54083-K3 - 40", "K3/40 stays K3");
 
-  const crossProduct = resolveVariantByStableIds(k3, {
-    productId: PRODUCT_S1,
-    variationId: VARIANT_S1_40,
-    size: "40",
-  });
-  assert(crossProduct === undefined, "S1 ids rejected on K3 product");
-
-  const sizeOnlyTrap = s1.variants.find((v) => v.size === "40");
-  assert(sizeOnlyTrap?.sku === "F54083-S1 - 40", "size-only would find S1 sibling");
-  const byIds = resolveVariantByStableIds(s1, {
+  const byIds = reconcileCartLineIdentity(s1, {
     productId: PRODUCT_K3,
     variationId: VARIANT_K3_40,
     size: "40",
   });
-  assert(byIds === undefined, "stable ids never cross to S1 via size");
+  assert(byIds.status === "reject", "stable ids never cross to S1 via size");
+
+  const sizeOnlyTrap = s1.variants.find((v) => v.size === "40");
+  assert(sizeOnlyTrap?.sku === "F54083-S1 - 40", "size-only would find S1 sibling");
 
   const revalidate = readFileSync("src/lib/cart-revalidate.ts", "utf8");
   assert(
-    revalidate.includes("resolveVariantByStableIds"),
-    "cart revalidate uses stable ids",
+    revalidate.includes("reconcileCartLineIdentity"),
+    "cart revalidate uses identity reconcile",
   );
   assert(
     !revalidate.includes("v.sku === line.variantSku"),
     "SKU fallback removed (colorway risk)",
+  );
+}
+
+/** Stale / desynced claims must be rejected — never silently remapped to a sibling. */
+function testStaleAndDesyncedColorwayRejected() {
+  const k3 = {
+    id: PRODUCT_K3,
+    slug: "bayyildiz-gunluk-ayakkabi-model-f54083-f54083-k3",
+    variants: [{ id: VARIANT_K3_40, sku: "F54083-K3 - 40", size: "40" }],
+  };
+  const s1 = {
+    id: PRODUCT_S1,
+    slug: "bayyildiz-gunluk-ayakkabi-model-f54083-f54083-s1",
+    variants: [{ id: VARIANT_S1_40, sku: "F54083-S1 - 40", size: "40" }],
+  };
+
+  // Pre-import / regenerated IDs: product resolved by slug is K3, cart still has old foreign ids
+  const staleIds = reconcileCartLineIdentity(k3, {
+    productId: "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
+    variationId: "bbbbbbbb-bbbb-4ccc-8ddd-eeeeeeeeeeee",
+    variantSku: "F54083-K3 - 40",
+    size: "40",
+  });
+  assert(staleIds.status === "reject", "stale productId rejected");
+  assert(
+    staleIds.status === "reject" && staleIds.reason === "product_mismatch",
+    "stale pre-import ids are product_mismatch",
+  );
+
+  // The production bug shape: S1 IDs with a K3 SKU claim (display said K3, order was S1)
+  const desync = reconcileCartLineIdentity(s1, {
+    productId: PRODUCT_S1,
+    variationId: VARIANT_S1_40,
+    variantSku: "F54083-K3 - 40",
+    model: "F54083-K3",
+    size: "40",
+  });
+  assert(desync.status === "reject", "K3 claim on S1 ids rejected");
+  assert(
+    desync.status === "reject" && desync.reason === "colorway_mismatch",
+    "desync is colorway_mismatch not remap",
+  );
+
+  // Sibling same size remains isolated when claims match their own colorway
+  const s1Ok = reconcileCartLineIdentity(s1, {
+    productId: PRODUCT_S1,
+    variationId: VARIANT_S1_40,
+    variantSku: "F54083-S1 - 40",
+    size: "40",
+  });
+  assert(s1Ok.status === "ok", "S1/40 stays S1 when claims match");
+
+  // Missing variant id on correct product (regenerated variant uuid)
+  const missingVariant = reconcileCartLineIdentity(k3, {
+    productId: PRODUCT_K3,
+    variationId: "cccccccc-cccc-4ccc-8ddd-eeeeeeeeeeee",
+    variantSku: "F54083-K3 - 40",
+    size: "40",
+  });
+  assert(
+    missingVariant.status === "reject" &&
+      missingVariant.reason === "variant_missing",
+    "invalid variant id rejected not remapped by size/sku",
+  );
+
+  assert(
+    colorwayParentKey("F54083-K3 - 40") === colorwayParentKey("F54083-K3"),
+    "parent key strips size",
+  );
+  assert(
+    colorwayParentKey("F54083-K3 - 40") !== colorwayParentKey("F54083-S1 - 40"),
+    "K3 and S1 parents differ",
   );
 }
 
@@ -291,6 +364,7 @@ function main() {
   testValidTcknInPlacePayload();
   testInitializeFailureReusesOrder();
   testColorwayIsolation();
+  testStaleAndDesyncedColorwayRejected();
   testDoubleSubmitSameKey();
   testOrphanOrdersDocumented();
   console.info("bayyildiz checkout checks passed");

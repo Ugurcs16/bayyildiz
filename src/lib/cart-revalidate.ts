@@ -1,5 +1,10 @@
 import type { CartLine } from "@/components/providers/cart-context";
-import { resolveVariantByStableIds } from "@/lib/cart-variant-identity";
+import {
+  cartIdentityRejectMessage,
+  reconcileCartLineIdentity,
+  variantSizeLabel,
+} from "@/lib/cart-variant-identity";
+import { parentSkuFromVariantSku } from "@/lib/sku-identity";
 import {
   fetchStorefrontProductBySlug,
   TervonaNotFoundError,
@@ -12,6 +17,7 @@ export type CartValidationIssue = {
   message: string;
   action: "removed" | "reduced" | "unverified";
   quantity?: number;
+  reason?: string;
 };
 
 export type CartValidationResult = {
@@ -21,18 +27,9 @@ export type CartValidationResult = {
   ok: boolean;
 };
 
-function variantSize(variant: StorefrontVariant): string {
-  const raw =
-    variant.size ??
-    variant.attributes?.size ??
-    variant.attributes?.Numara ??
-    "";
-  return String(raw).trim() || "Standart";
-}
-
 /**
  * Authoritative line from Tervona product + matched variant IDs.
- * Never copies identity from SKU/size alone.
+ * Always overwrites identity fields from catalog — never keeps a conflicting claim.
  */
 export function authoritativeCartLine(
   line: CartLine,
@@ -40,14 +37,16 @@ export function authoritativeCartLine(
   variant: StorefrontVariant,
   quantity: number,
 ): CartLine {
+  const sku = (variant.sku ?? "").trim();
   return {
     ...line,
     productId: product.id,
     variationId: variant.id,
     slug: product.slug,
     name: product.title || line.name,
-    variantSku: variant.sku || line.variantSku,
-    size: variantSize(variant),
+    model: parentSkuFromVariantSku(sku) || line.model,
+    variantSku: sku,
+    size: variantSizeLabel(variant),
     price: variant.price?.amount ?? line.price,
     availableStock: Math.max(0, variant.availableStock),
     quantity,
@@ -56,8 +55,8 @@ export function authoritativeCartLine(
 }
 
 /**
- * Revalidate cart lines against live Tervona stock.
- * Transport failures leave items unchanged and mark `unverified`.
+ * Revalidate cart lines against live Tervona stock + colorway identity.
+ * Stale / conflicting lines are removed — never remapped to a sibling colorway.
  */
 export async function revalidateCartAgainstTervona(
   items: CartLine[],
@@ -69,23 +68,28 @@ export async function revalidateCartAgainstTervona(
   for (const line of items) {
     try {
       const product = await fetchStorefrontProductBySlug(line.slug);
-      if (product.id !== line.productId) {
+      const reconciled = reconcileCartLineIdentity(product, line);
+      if (reconciled.status === "reject") {
         issues.push({
           key: line.key,
           action: "removed",
-          message: `"${line.name}" sepet kimliği ürünle uyuşmuyor ve çıkarıldı.`,
+          reason: reconciled.reason,
+          message: cartIdentityRejectMessage(line, reconciled.reason),
         });
         continue;
       }
-      const variant = resolveVariantByStableIds(product, line);
-      if (!variant || !variant.available || variant.availableStock <= 0) {
+
+      const variant = reconciled.variant as StorefrontVariant;
+      if (!variant.available || variant.availableStock <= 0) {
         issues.push({
           key: line.key,
           action: "removed",
+          reason: "out_of_stock",
           message: `"${line.name}" (${line.size}) stokta kalmadı ve sepetten çıkarıldı.`,
         });
         continue;
       }
+
       const max = Math.max(0, variant.availableStock);
       if (line.quantity > max) {
         next.push(authoritativeCartLine(line, product, variant, max));
@@ -103,6 +107,7 @@ export async function revalidateCartAgainstTervona(
         issues.push({
           key: line.key,
           action: "removed",
+          reason: "not_found",
           message: `"${line.name}" artık satışta değil ve sepetten çıkarıldı.`,
         });
         continue;

@@ -111,6 +111,21 @@ export async function createStorefrontOrderForCheckout(input: {
     quantity: line.quantity,
   }));
 
+  for (const line of stock.items) {
+    if (!(line.variantSku ?? "").trim()) {
+      return bffJson(
+        {
+          error:
+            "Sepet kimliği doğrulanamadı. Lütfen ürünü sepetten çıkarıp yeniden ekleyin.",
+          code: "CART_IDENTITY_INVALID",
+          items: [],
+          issues: stock.issues,
+        },
+        409,
+      );
+    }
+  }
+
   const fingerprint = cartFingerprint(orderItems);
   const idempotency = resolveCheckoutIdempotencyKey({
     fingerprint,
