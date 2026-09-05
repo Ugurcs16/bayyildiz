@@ -15,6 +15,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "www.bayyildiz.com",
       },
+      {
+        protocol: "https",
+        hostname: "images.bizimhesap.com",
+      },
     ],
   },
 };

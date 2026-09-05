@@ -47,15 +47,17 @@ async function tervonaFetch<T>(
   const timer = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
 
   try {
+    const cache = init?.cache;
     const res = await fetch(`${root}${path}`, {
-      ...init,
       method: "GET",
       headers: {
         Accept: "application/json",
         ...(init?.headers ?? {}),
       },
       signal: controller.signal,
-      next: { revalidate: REVALIDATE_SECONDS },
+      ...(cache === "no-store"
+        ? { cache: "no-store" as const }
+        : { next: { revalidate: REVALIDATE_SECONDS } }),
     });
 
     const contentType = res.headers.get("content-type");
@@ -164,6 +166,7 @@ export async function fetchStorefrontProductBySlug(
   const encoded = encodeURIComponent(slug.trim());
   const body = await tervonaFetch<unknown>(
     `/api/storefront/products/${encoded}`,
+    { cache: "no-store" },
   );
   return assertProductEnvelope(body);
 }
