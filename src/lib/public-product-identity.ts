@@ -25,11 +25,16 @@ function foldTr(value: string): string {
 function brandPattern(brand: string): string {
   return brand
     .split(/\s+/)
-    .map((part) =>
-      escapeRegExp(part)
-        .replace(/i/gi, "[iİıI]")
-        .replace(/I/g, "[iİıI]"),
-    )
+    .map((part) => {
+      // Expand i/I before assembling character classes (avoid double-replace).
+      return [...part]
+        .map((ch) => {
+          const lower = ch.toLocaleLowerCase("tr-TR");
+          if (lower === "i") return "[iİıI]";
+          return escapeRegExp(ch);
+        })
+        .join("");
+    })
     .join("\\s*");
 }
 
