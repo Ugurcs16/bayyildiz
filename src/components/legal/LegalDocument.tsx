@@ -23,17 +23,9 @@ export function LegalDocument({
           {intro}
         </p>
       ) : null}
-      <div className="mt-10 space-y-8 text-base leading-relaxed text-[var(--color-anthracite-soft)] [&_h2]:font-display [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:text-[var(--color-espresso)] [&_h2]:sm:text-2xl [&_ul]:mt-3 [&_ul]:list-disc [&_ul]:space-y-2 [&_ul]:pl-5 [&_p]:mt-3">
+      <div className="mt-10 space-y-8 text-base leading-relaxed text-[var(--color-anthracite-soft)] [&_h2]:font-display [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:text-[var(--color-espresso)] [&_h2]:sm:text-2xl [&_ul]:mt-3 [&_ul]:list-disc [&_ul]:space-y-2 [&_ul]:pl-5 [&_p]:mt-3 [&_address]:not-italic">
         {children}
       </div>
     </article>
-  );
-}
-
-export function LegalPlaceholder({ children }: { children: string }) {
-  return (
-    <span className="rounded bg-amber-50 px-1.5 py-0.5 font-medium text-amber-950 ring-1 ring-amber-200/80">
-      {children}
-    </span>
   );
 }

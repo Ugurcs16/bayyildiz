@@ -1,14 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import {
-  LegalDocument,
-  LegalPlaceholder,
-} from "@/components/legal/LegalDocument";
+import { LegalDocument } from "@/components/legal/LegalDocument";
 import { LEGAL_ROUTES, SITE_NAME } from "@/lib/constants";
-import {
-  LEGAL_PLACEHOLDERS,
-  VERIFIED_CONTACT,
-} from "@/lib/legal/business";
+import { VERIFIED_CONTACT } from "@/lib/legal/business";
 
 export const metadata: Metadata = {
   title: "İade & Değişim",
@@ -17,51 +11,76 @@ export const metadata: Metadata = {
 };
 
 export default function ReturnsPage() {
+  const { heykel, fsm } = VERIFIED_CONTACT;
+
   return (
     <LegalDocument
       title="İade & Değişim"
-      intro="Kullanılmamış ve satışa uygun ürünlerde iade / değişim taleplerinizi mağaza veya WhatsApp üzerinden iletebilirsiniz. Aşağıdaki süre ve istisna satırları hukuki kimlik bilgileri tamamlanıp avukat incelemesinden sonra netleştirilecektir."
+      intro="İade veya değişim için ürünü göndermeden önce bizimle iletişime geçin. Ekibimiz size süreç ve gönderim bilgileri konusunda yardımcı olacaktır."
     >
       <section>
-        <h2>Nasıl başvurulur?</h2>
+        <h2>İletişim</h2>
         <ul>
-          <li>WhatsApp: {VERIFIED_CONTACT.whatsappDisplay}</li>
-          <li>Heykel: {VERIFIED_CONTACT.stores[0].phone}</li>
-          <li>FSM: {VERIFIED_CONTACT.stores[1].phone}</li>
+          <li>
+            WhatsApp:{" "}
+            <a
+              href={VERIFIED_CONTACT.whatsappHref}
+              className="underline underline-offset-2"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {VERIFIED_CONTACT.whatsappDisplay}
+            </a>
+          </li>
+          <li>
+            Heykel:{" "}
+            <a href={heykel.phoneHref} className="underline underline-offset-2">
+              {heykel.phone}
+            </a>
+          </li>
+          <li>
+            FSM:{" "}
+            <a href={fsm.phoneHref} className="underline underline-offset-2">
+              {fsm.phone}
+            </a>
+          </li>
         </ul>
         <p>
-          Sipariş numaranızı, ürün model kodunu ve talebinizin iade mi yoksa
-          değişim mi olduğunu belirtiniz.
+          Başvurunuzda sipariş numaranızı, ürün model kodunu ve talebinizin
+          iade mi yoksa değişim mi olduğunu belirtiniz.
         </p>
       </section>
 
       <section>
-        <h2>İade adresi</h2>
+        <h2>Mağaza bilgisi</h2>
         <p>
-          <LegalPlaceholder>{LEGAL_PLACEHOLDERS.returnAddress}</LegalPlaceholder>
+          Gerekirse görüşme veya teslim için Heykel mağazamızın adresi:
+        </p>
+        <address className="mt-3 text-sm leading-relaxed">
+          Bayyıldız Heykel
+          <br />
+          {heykel.address}
+          <br />
+          {heykel.phone}
+        </address>
+        <p className="mt-3 text-sm">
+          Lütfen ürünü bu adrese göndermeden önce onay alın; iade kargo adresi
+          talebinize göre ayrıca bildirilir.
         </p>
       </section>
 
       <section>
         <h2>Yasal haklar</h2>
         <p>
-          Tüketici mevzuatından doğan haklarınız saklıdır. Somut cayma süreleri
-          ve istisnalar (ör. hijyen / kişiye özel ürünler) bu sayfada henüz
-          kesinleştirilmemiştir; detay için{" "}
-          <Link
-            href={LEGAL_ROUTES.distanceSales}
-            className="font-medium text-[var(--color-espresso)] underline underline-offset-2"
-          >
-            Mesafeli Satış
-          </Link>{" "}
-          ve{" "}
+          Tüketici mevzuatından doğan haklarınız saklıdır. Ayrıntılı genel
+          koşullar için{" "}
           <Link
             href={LEGAL_ROUTES.terms}
             className="font-medium text-[var(--color-espresso)] underline underline-offset-2"
           >
             Şartlar ve Koşullar
           </Link>{" "}
-          sayfalarına bakınız.
+          sayfasına bakabilirsiniz.
         </p>
       </section>
     </LegalDocument>

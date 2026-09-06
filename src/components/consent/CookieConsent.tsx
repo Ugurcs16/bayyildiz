@@ -78,7 +78,7 @@ function PreferencesPanel({
       <CategoryRow
         id="consent-functional"
         title="İşlevsel"
-        description="Favori ürün listesi gibi kolaylık sağlayan yerel depolama."
+        description="Favori listesi gibi kolaylık sağlayan yerel depolama (isteğe bağlı)."
         checked={functional}
         onChange={setFunctional}
       />
@@ -88,7 +88,7 @@ function PreferencesPanel({
         description={
           HAS_ACTIVE_ANALYTICS
             ? "Kullanım istatistikleri ve site iyileştirme ölçümleri."
-            : "Şu an Bayyıldız vitrininde aktif analitik aracı yok. Tercih ileride kullanılmak üzere saklanır."
+            : "Şu an bağlı aktif analitik aracı yok. Tercih ileride kullanılmak üzere saklanır."
         }
         checked={analytics}
         onChange={setAnalytics}
@@ -99,7 +99,7 @@ function PreferencesPanel({
         description={
           HAS_ACTIVE_MARKETING
             ? "Reklam ve yeniden pazarlama çerezleri."
-            : "Şu an Bayyıldız vitrininde aktif pazarlama / reklam izleyicisi yok. Tercih ileride kullanılmak üzere saklanır."
+            : "Şu an bağlı aktif pazarlama / reklam izleyicisi yok. Tercih ileride kullanılmak üzere saklanır."
         }
         checked={marketing}
         onChange={setMarketing}
@@ -110,7 +110,7 @@ function PreferencesPanel({
           onClick={() => onSave({ functional, analytics, marketing })}
           className="inline-flex min-h-11 flex-1 items-center justify-center rounded-full bg-[var(--color-espresso)] px-4 text-sm font-semibold text-white"
         >
-          Tercihleri Kaydet
+          Tercihleri kaydet
         </button>
         <button
           type="button"
@@ -154,25 +154,25 @@ export function CookieConsent() {
 
   return (
     <div
-      className="fixed inset-x-0 bottom-0 z-[120] flex justify-center p-3 pb-[calc(4.75rem+env(safe-area-inset-bottom))] md:p-6 md:pb-6"
+      className="pointer-events-none fixed inset-x-0 bottom-0 z-[120] flex justify-center p-3 pb-[calc(4.75rem+env(safe-area-inset-bottom))] md:p-6 md:pb-6"
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
     >
       <div
         ref={panelRef}
-        className="max-h-[min(78vh,40rem)] w-full max-w-xl overflow-y-auto rounded-3xl border border-black/10 bg-[var(--color-cream)] p-4 shadow-[0_20px_60px_rgba(44,24,16,0.22)] sm:p-5"
+        className="pointer-events-auto max-h-[min(70vh,36rem)] w-full max-w-lg overflow-y-auto rounded-3xl border border-black/10 bg-[var(--color-cream)] p-4 shadow-[0_20px_60px_rgba(44,24,16,0.22)] sm:p-5"
       >
         <h2
           id={titleId}
           className="font-display text-xl font-semibold tracking-tight text-[var(--color-espresso)]"
         >
-          {showPreferences ? "Çerez tercihleri" : "Çerezler ve gizlilik"}
+          Çerez tercihleri
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-[var(--color-anthracite-soft)]">
           {showPreferences
-            ? "Zorunlu teknolojiler site, sepet, güvenlik ve ödeme için gereklidir. İsteğe bağlı kategorileri açıp kapatabilirsiniz."
-            : "Alışveriş, sepet ve güvenli ödeme için zorunlu teknolojiler kullanılır. İsteğe bağlı depolamayı kabul edebilir veya reddedebilirsiniz."}
+            ? "Zorunlu çerezler sitenin çalışması için gereklidir. Analitik ve pazarlama tercihlerimizi bağımsız olarak açıp kapatabilirsiniz."
+            : "Size daha iyi bir alışveriş deneyimi sunmak ve site kullanımını anlamak için çerezlerden yararlanabiliriz. Zorunlu çerezler sitenin çalışması için gereklidir. Diğer çerezleri tercihinize göre kullanabilirsiniz."}
         </p>
         <p className="mt-2 text-xs text-[var(--color-taupe-muted)]">
           <Link
@@ -204,21 +204,21 @@ export function CookieConsent() {
               onClick={acceptAll}
               className="inline-flex min-h-11 items-center justify-center rounded-full bg-[var(--color-espresso)] px-4 text-sm font-semibold text-white"
             >
-              Tümünü Kabul Et
+              Tümünü kabul et
             </button>
             <button
               type="button"
               onClick={rejectOptional}
               className="inline-flex min-h-11 items-center justify-center rounded-full border border-black/12 bg-white px-4 text-sm font-semibold text-[var(--color-espresso)]"
             >
-              Yalnızca Gerekli Çerezler
+              Yalnızca gerekli
             </button>
             <button
               type="button"
               onClick={openPreferences}
               className="inline-flex min-h-11 items-center justify-center rounded-full px-4 text-sm font-semibold text-[var(--color-espresso)] underline-offset-4 hover:underline"
             >
-              Tercihleri Yönet
+              Tercihleri yönet
             </button>
           </div>
         )}
