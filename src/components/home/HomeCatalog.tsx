@@ -12,30 +12,19 @@ export function HomeCatalog({ products, catalogHref }: Props) {
   return (
     <section
       id="urunler"
-      className="scroll-mt-20 border-t border-black/[0.06] bg-[var(--color-cream)] px-4 pb-8 pt-3 sm:px-6 sm:pb-10 sm:pt-8"
+      className="scroll-mt-20 border-t border-black/[0.06] bg-[var(--color-cream)] px-4 pb-8 pt-5 sm:px-6 sm:pb-10 sm:pt-8"
     >
       <div className="mx-auto max-w-6xl">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h2 className="font-display text-3xl font-semibold tracking-tight text-[var(--color-espresso)] sm:text-4xl">
-              Öne çıkan modeller
-            </h2>
-            <p className="mt-2 max-w-xl text-sm leading-relaxed text-[var(--color-anthracite-soft)] sm:text-base">
-              Vitrinden seçilmiş modeller. Tüm koleksiyon için kategorilere
-              göz atın veya ürün detayından numara seçerek sepete ekleyin.
-            </p>
-          </div>
-          <p className="text-sm font-medium text-[var(--color-taupe-muted)]">
-            Vitrin seçkisi
-          </p>
-        </div>
+        <h2 className="font-display text-3xl font-semibold tracking-tight text-[var(--color-espresso)] sm:text-4xl">
+          Öne Çıkan Modeller
+        </h2>
         {products.length === 0 ? (
-          <p className="mt-10 text-center text-sm text-[var(--color-anthracite-soft)]">
+          <p className="mt-6 text-center text-sm text-[var(--color-anthracite-soft)] sm:mt-8">
             Şu an listelenecek ürün yok.
           </p>
         ) : (
           <>
-            <ul className="mt-8 grid grid-cols-2 gap-4 sm:mt-10 lg:grid-cols-4">
+            <ul className="mt-5 grid grid-cols-2 gap-4 sm:mt-7 lg:grid-cols-4">
               {products.map((p, index) => (
                 <li key={p.id}>
                   <ProductCard product={p} imagePriority={index < 4} />
