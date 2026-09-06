@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CookiePreferencesButton } from "@/components/consent/CookiePreferencesButton";
 import {
   FOOTER_ABOUT_SNIPPET,
   INSTAGRAM_HANDLE,
@@ -9,6 +10,14 @@ import {
   STORE_HOURS,
   STORES,
 } from "@/lib/constants";
+
+const LEGAL_LINKS = [
+  { href: LEGAL_ROUTES.terms, label: "Şartlar ve Koşullar" },
+  { href: LEGAL_ROUTES.privacy, label: "Gizlilik Politikası" },
+  { href: LEGAL_ROUTES.cookies, label: "Çerez Politikası" },
+  { href: LEGAL_ROUTES.returns, label: "İade & Değişim" },
+  { href: LEGAL_ROUTES.distanceSales, label: "Mesafeli Satış" },
+] as const;
 
 export function Footer() {
   return (
@@ -53,21 +62,18 @@ export function Footer() {
                 Yasal
               </p>
               <ul className="mt-4 flex flex-col gap-2.5">
+                {LEGAL_LINKS.map((item) => (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      className="text-sm text-[var(--color-cream)]/85 transition-colors hover:text-white"
+                    >
+                      {item.label}
+                    </Link>
+                  </li>
+                ))}
                 <li>
-                  <Link
-                    href={LEGAL_ROUTES.terms}
-                    className="text-sm text-[var(--color-cream)]/85 transition-colors hover:text-white"
-                  >
-                    Şartlar ve Koşullar
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href={LEGAL_ROUTES.privacy}
-                    className="text-sm text-[var(--color-cream)]/85 transition-colors hover:text-white"
-                  >
-                    Gizlilik Politikası
-                  </Link>
+                  <CookiePreferencesButton />
                 </li>
               </ul>
               <p className="mt-8 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-gold-soft)]/90">

@@ -24,6 +24,9 @@ export const FOOTER_ABOUT_SNIPPET =
 export const LEGAL_ROUTES = {
   privacy: "/gizlilik-politikasi",
   terms: "/sartlar-ve-kosullar",
+  cookies: "/cerez-politikasi",
+  returns: "/iade-degisim",
+  distanceSales: "/mesafeli-satis",
 } as const;
 
 export const CATEGORY_QUICK = [

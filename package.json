@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test:checkout": "npx --yes tsx scripts/verify-checkout.ts",
+    "test:consent": "npx --yes tsx scripts/verify-consent.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

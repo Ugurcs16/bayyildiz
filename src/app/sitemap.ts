@@ -11,9 +11,9 @@ const STATIC_PATHS: {
   { path: "/iletisim", priority: 0.6, changeFrequency: "monthly" },
   { path: "/gizlilik-politikasi", priority: 0.4, changeFrequency: "yearly" },
   { path: "/sartlar-ve-kosullar", priority: 0.4, changeFrequency: "yearly" },
+  { path: "/cerez-politikasi", priority: 0.4, changeFrequency: "yearly" },
   { path: "/iade-degisim", priority: 0.45, changeFrequency: "yearly" },
   { path: "/mesafeli-satis", priority: 0.4, changeFrequency: "yearly" },
-  { path: "/gizlilik", priority: 0.35, changeFrequency: "yearly" },
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
