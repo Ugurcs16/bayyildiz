@@ -1,19 +1,20 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Inter } from "next/font/google";
+import { Inter, Source_Serif_4 } from "next/font/google";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { AppProviders } from "@/components/providers/app-providers";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/constants";
 import "./globals.css";
 
 const inter = Inter({
-  subsets: ["latin"],
+  subsets: ["latin", "latin-ext"],
   variable: "--font-inter",
   display: "swap",
 });
 
-const display = Cormorant_Garamond({
-  subsets: ["latin"],
-  weight: ["500", "600", "700"],
+/** Editorial serif: clearer strokes than Cormorant; latin-ext for Turkish glyphs. */
+const display = Source_Serif_4({
+  subsets: ["latin", "latin-ext"],
+  weight: ["600", "700"],
   variable: "--font-display",
   display: "swap",
 });

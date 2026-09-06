@@ -24,7 +24,7 @@ export function HeroSection({ videoUrl }: Props) {
 
       <div className="relative z-10 mx-auto w-full max-w-6xl px-4 pb-[calc(4rem+env(safe-area-inset-bottom))] pt-14 sm:px-6 sm:pb-20 sm:pt-28 md:pb-18 md:pt-24">
         <div className="max-w-2xl">
-          <h1 className="font-display text-[2.125rem] font-semibold leading-[1.12] tracking-tight text-white text-balance drop-shadow-[0_2px_24px_rgba(0,0,0,0.45)] sm:text-5xl sm:leading-[1.1] md:text-6xl lg:text-[3.5rem]">
+          <h1 className="font-display text-[2.125rem] font-bold leading-[1.15] tracking-tight text-white text-balance drop-shadow-[0_2px_28px_rgba(0,0,0,0.55)] sm:text-5xl sm:leading-[1.12] md:text-6xl lg:text-[3.5rem]">
             <span className="block">1989’dan Günümüze</span>
             <span className="mt-1 block sm:mt-1.5">Kalite ve En Yeni Trend</span>
           </h1>

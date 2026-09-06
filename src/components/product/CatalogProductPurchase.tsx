@@ -136,11 +136,11 @@ export function CatalogProductPurchase({
 
   return (
     <>
-      <h1 className="font-display mt-1 text-3xl font-semibold tracking-tight text-[var(--color-espresso)] sm:mt-2 sm:text-4xl">
+      <h1 className="font-product-meta mt-1 text-3xl font-semibold tracking-tight text-[var(--color-espresso)] sm:mt-2 sm:text-4xl">
         {publicCode}
       </h1>
 
-      <p className="mt-4 font-display text-3xl font-semibold text-[var(--color-espresso)]">
+      <p className="font-product-meta mt-4 text-3xl font-semibold text-[var(--color-espresso)]">
         {new Intl.NumberFormat("tr-TR", {
           style: "currency",
           currency: "TRY",

@@ -61,7 +61,7 @@ export function ProductCard({ product, imagePriority = false }: Props) {
       </div>
 
       <div className="flex flex-1 flex-col p-3 sm:p-3.5">
-        <h3 className="font-display text-base font-semibold leading-snug tracking-wide text-[var(--color-espresso)] sm:text-lg">
+        <h3 className="font-product-meta text-[0.9375rem] font-semibold leading-snug text-[var(--color-espresso)] sm:text-base">
           <Link href={`/urun/${product.slug}`} className="hover:underline">
             {code}
           </Link>
@@ -71,11 +71,11 @@ export function ProductCard({ product, imagePriority = false }: Props) {
         </p>
 
         <div className="mt-2.5 flex flex-wrap items-baseline gap-2 border-t border-black/[0.06] pt-2.5">
-          <span className="font-display text-xl font-semibold text-[var(--color-espresso)]">
+          <span className="font-product-meta text-xl font-semibold text-[var(--color-espresso)]">
             {formatPrice(product.price)}
           </span>
           {product.oldPrice ? (
-            <span className="text-sm text-[var(--color-anthracite-soft)] line-through">
+            <span className="font-product-meta text-sm text-[var(--color-anthracite-soft)] line-through">
               {formatPrice(product.oldPrice)}
             </span>
           ) : null}
