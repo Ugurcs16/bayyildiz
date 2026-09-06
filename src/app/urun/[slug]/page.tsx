@@ -10,6 +10,7 @@ import {
   buildProductMetaDescription,
   buildProductSeoTitle,
 } from "@/lib/product-seo";
+import { publicProductCode, publicProductImageAlt } from "@/lib/public-product-identity";
 import { CatalogProductGallery } from "@/components/product/CatalogProductGallery";
 import { CatalogProductPurchase } from "@/components/product/CatalogProductPurchase";
 import { ProductDetailSections } from "@/components/product/ProductDetailSections";
@@ -71,6 +72,8 @@ export default async function ProductPage({ params }: Props) {
     String(product.category);
 
   const jsonLd = buildProductJsonLd(product, product.price);
+  const publicCode = publicProductCode(product);
+  const imageAlt = publicProductImageAlt(product);
 
   return (
     <>
@@ -88,15 +91,15 @@ export default async function ProductPage({ params }: Props) {
             Ürünler
           </Link>
           <span className="mx-2 opacity-50">/</span>
-          <span className="text-[var(--color-espresso)]">{product.name}</span>
+          <span className="text-[var(--color-espresso)]">{publicCode}</span>
         </div>
       </div>
 
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-2 lg:gap-14 lg:py-12">
         <CatalogProductGallery
           images={galleryImages}
-          productName={product.name}
-          imageAlt={product.imageAlt}
+          productName={publicCode}
+          imageAlt={imageAlt}
         />
         <article>
           <CatalogProductPurchase product={product} />
@@ -118,17 +121,6 @@ export default async function ProductPage({ params }: Props) {
 
           <p className="mt-3 text-sm font-semibold uppercase tracking-widest text-[var(--color-taupe-muted)]">
             {categoryLabel}
-          </p>
-
-          <p className="mt-4 text-sm text-[var(--color-anthracite-soft)]">
-            Model kodu:{" "}
-            <span className="font-semibold text-[var(--color-anthracite)]">
-              {product.code}
-            </span>
-          </p>
-
-          <p className="mt-3 text-base leading-relaxed text-[var(--color-anthracite-soft)]">
-            {product.seoDescription ?? product.teaser}
           </p>
 
           <Link

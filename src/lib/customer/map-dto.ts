@@ -4,6 +4,7 @@ import type {
   CustomerOrderLine,
   CustomerProfile,
 } from "./types";
+import { publicProductCode, stripSupplierBrandLabel } from "@/lib/public-product-identity";
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   if (!value || typeof value !== "object") return null;
@@ -52,11 +53,22 @@ export function mapCustomerAddress(value: unknown): CustomerAddress | null {
 function mapOrderLine(value: unknown): CustomerOrderLine | null {
   const row = asRecord(value);
   if (!row) return null;
-  const title = str(row.productTitle) || str(row.title);
-  if (!title) return null;
+  const rawTitle = str(row.productTitle) || str(row.title);
+  if (!rawTitle) return null;
+  const sku = str(row.sku) || str(row.variantSku) || str(row.variantTitle);
+  const title = publicProductCode({
+    name: rawTitle,
+    variantSku: sku,
+    code: str(row.productCode) || str(row.model),
+  });
+  const variantTitle = stripSupplierBrandLabel(str(row.variantTitle));
   return {
     title,
-    variantTitle: str(row.variantTitle),
+    variantTitle:
+      variantTitle &&
+      variantTitle.toLocaleUpperCase("tr-TR") !== title.toLocaleUpperCase("tr-TR")
+        ? variantTitle
+        : "",
     quantity: Math.max(0, Math.floor(num(row.quantity))),
   };
 }

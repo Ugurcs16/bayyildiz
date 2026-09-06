@@ -6,6 +6,10 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { PLACEHOLDER_PRODUCT_IMAGE } from "@/lib/constants";
 import { useCart } from "@/components/providers/cart-context";
+import {
+  publicCartLineLabel,
+  publicVariantSkuLabel,
+} from "@/lib/public-product-identity";
 import { formatTry } from "@/lib/woocommerce";
 
 export function CartView() {
@@ -123,7 +127,7 @@ export function CartView() {
                 >
                   <Image
                     src={line.image || PLACEHOLDER_PRODUCT_IMAGE}
-                    alt={line.name}
+                    alt={publicCartLineLabel(line)}
                     fill
                     className="object-cover"
                     sizes="112px"
@@ -132,46 +136,32 @@ export function CartView() {
                 <div className="flex min-w-0 flex-1 flex-col">
                   <Link
                     href={`/urun/${line.slug}`}
-                    className="font-semibold leading-snug text-[var(--color-espresso)] hover:underline"
+                    className="font-semibold leading-snug tracking-wide text-[var(--color-espresso)] hover:underline"
                   >
-                    {line.name}
+                    {publicCartLineLabel(line)}
                   </Link>
                   <dl className="mt-2 grid gap-1 text-xs text-[var(--color-anthracite-soft)] sm:text-[0.8125rem]">
-                    <div className="flex flex-wrap gap-x-4 gap-y-0.5">
-                      <div>
-                        <dt className="sr-only">Model</dt>
-                        <dd>
-                          <span className="text-[var(--color-taupe-muted)]">
-                            Model
-                          </span>{" "}
-                          <span className="font-medium text-[var(--color-anthracite)]">
-                            {line.model}
-                          </span>
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="sr-only">Numara</dt>
-                        <dd>
-                          <span className="text-[var(--color-taupe-muted)]">
-                            Numara
-                          </span>{" "}
-                          <span className="font-medium text-[var(--color-anthracite)]">
-                            {line.size}
-                          </span>
-                        </dd>
-                      </div>
-                    </div>
                     <div>
-                      <dt className="sr-only">SKU</dt>
+                      <dt className="sr-only">Numara</dt>
                       <dd>
                         <span className="text-[var(--color-taupe-muted)]">
-                          SKU
+                          Numara
                         </span>{" "}
-                        <span className="font-mono text-[0.7rem] font-medium tracking-wide text-[var(--color-anthracite)] sm:text-xs">
-                          {line.variantSku}
+                        <span className="font-medium text-[var(--color-anthracite)]">
+                          {line.size}
                         </span>
                       </dd>
                     </div>
+                    {publicVariantSkuLabel(line.variantSku) ? (
+                      <div>
+                        <dt className="sr-only">SKU</dt>
+                        <dd>
+                          <span className="font-mono text-[0.7rem] font-medium tracking-wide text-[var(--color-anthracite)] sm:text-xs">
+                            {publicVariantSkuLabel(line.variantSku)}
+                          </span>
+                        </dd>
+                      </div>
+                    ) : null}
                   </dl>
                   <p className="mt-3 text-sm text-[var(--color-anthracite-soft)]">
                     Birim: {formatTry(line.price)}

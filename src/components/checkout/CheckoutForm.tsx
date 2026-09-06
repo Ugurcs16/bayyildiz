@@ -14,6 +14,10 @@ import {
   normalizeIdentityNumber,
 } from "@/lib/checkout/identity-number";
 import { SITE_NAME } from "@/lib/constants";
+import {
+  publicCartLineLabel,
+  publicVariantSkuLabel,
+} from "@/lib/public-product-identity";
 import { formatTry } from "@/lib/woocommerce";
 
 const TRUST_POINTS = [
@@ -242,15 +246,17 @@ export function CheckoutForm() {
                   >
                     <span className="min-w-0 leading-snug">
                       <span className="font-medium text-[var(--color-espresso)]">
-                        {line.name}
+                        {publicCartLineLabel(line)}
                       </span>
                       <span className="text-[var(--color-taupe-muted)]">
                         {" "}
                         · {line.size}
                       </span>
-                      <span className="mt-0.5 block font-mono text-[0.7rem] tracking-wide text-[var(--color-taupe-muted)]">
-                        {line.variantSku}
-                      </span>
+                      {publicVariantSkuLabel(line.variantSku) ? (
+                        <span className="mt-0.5 block font-mono text-[0.7rem] tracking-wide text-[var(--color-taupe-muted)]">
+                          {publicVariantSkuLabel(line.variantSku)}
+                        </span>
+                      ) : null}
                       <span className="block text-xs text-[var(--color-taupe-muted)]">
                         × {line.quantity}
                       </span>

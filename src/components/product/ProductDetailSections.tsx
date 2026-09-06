@@ -2,6 +2,10 @@ import Link from "next/link";
 import { ProductCard } from "@/components/product/ProductCard";
 import { listCatalogProducts } from "@/lib/catalog-source";
 import type { CatalogProduct } from "@/lib/products-normalizer";
+import {
+  publicProductCode,
+  stripSupplierBrandLabel,
+} from "@/lib/public-product-identity";
 
 export async function ProductDetailSections({
   product,
@@ -17,6 +21,7 @@ export async function ProductDetailSections({
   const similar = related.products
     .filter((item) => item.id !== product.id && item.slug !== product.slug)
     .slice(0, 4);
+  const code = publicProductCode(product);
 
   return (
     <div className="mx-auto mt-16 max-w-6xl space-y-16 px-4 sm:px-6">
@@ -26,7 +31,7 @@ export async function ProductDetailSections({
             Özellikler
           </h2>
           <ul className="mt-4 list-inside list-disc space-y-2 text-sm text-[var(--color-anthracite-soft)]">
-            <li>Model kodu: {product.code}</li>
+            <li>{code}</li>
             <li>Kategori: {product.category}</li>
             <li>Anatomik destekli iç taban</li>
           </ul>
@@ -59,7 +64,9 @@ export async function ProductDetailSections({
             Ürün notu
           </h2>
           <p className="mt-3 text-sm leading-relaxed text-[var(--color-anthracite-soft)]">
-            {product.seoDescription ?? product.teaser}
+            {stripSupplierBrandLabel(
+              product.seoDescription ?? product.teaser ?? "",
+            )}
           </p>
           <p className="mt-4 text-sm leading-relaxed text-[var(--color-anthracite-soft)]">
             Değişim ve iade süreçlerinde mağaza ekibimiz destek olur. Detaylar için{" "}

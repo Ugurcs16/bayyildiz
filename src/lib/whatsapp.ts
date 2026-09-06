@@ -13,6 +13,7 @@ export function buildWhatsAppUrl(
 export const DEFAULT_PRODUCT_MESSAGE =
   "Merhaba, bu ürün hakkında bilgi almak istiyorum";
 
-export function productWhatsAppMessage(productName: string, sku: string) {
-  return `Merhaba, ${productName} (Model: ${sku}) hakkında bilgi almak istiyorum.`;
+export function productWhatsAppMessage(displayCode: string, _sku?: string) {
+  const code = displayCode.trim() || (_sku ?? "").trim() || "ürün";
+  return `Merhaba, ${code} hakkında bilgi almak istiyorum.`;
 }

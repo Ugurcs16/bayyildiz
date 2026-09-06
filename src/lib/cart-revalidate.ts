@@ -4,6 +4,7 @@ import {
   reconcileCartLineIdentity,
   variantSizeLabel,
 } from "@/lib/cart-variant-identity";
+import { publicCartLineLabel, publicProductCode } from "@/lib/public-product-identity";
 import { parentSkuFromVariantSku } from "@/lib/sku-identity";
 import {
   fetchStorefrontProductBySlug,
@@ -30,6 +31,7 @@ export type CartValidationResult = {
 /**
  * Authoritative line from Tervona product + matched variant IDs.
  * Always overwrites identity fields from catalog — never keeps a conflicting claim.
+ * Public name/model are presentation codes (no supplier brands).
  */
 export function authoritativeCartLine(
   line: CartLine,
@@ -38,13 +40,18 @@ export function authoritativeCartLine(
   quantity: number,
 ): CartLine {
   const sku = (variant.sku ?? "").trim();
+  const publicCode = publicProductCode({
+    name: product.title,
+    variantSku: sku,
+    code: parentSkuFromVariantSku(sku),
+  });
   return {
     ...line,
     productId: product.id,
     variationId: variant.id,
     slug: product.slug,
-    name: product.title || line.name,
-    model: parentSkuFromVariantSku(sku) || line.model,
+    name: publicCode,
+    model: publicCode,
     variantSku: sku,
     size: variantSizeLabel(variant),
     price: variant.price?.amount ?? line.price,
@@ -85,7 +92,7 @@ export async function revalidateCartAgainstTervona(
           key: line.key,
           action: "removed",
           reason: "out_of_stock",
-          message: `"${line.name}" (${line.size}) stokta kalmadı ve sepetten çıkarıldı.`,
+          message: `"${publicCartLineLabel(line)}" (${line.size}) stokta kalmadı ve sepetten çıkarıldı.`,
         });
         continue;
       }
@@ -97,7 +104,7 @@ export async function revalidateCartAgainstTervona(
           key: line.key,
           action: "reduced",
           quantity: max,
-          message: `"${line.name}" (${line.size}) için stok ${max} adetle sınırlandı.`,
+          message: `"${publicCartLineLabel(line)}" (${line.size}) için stok ${max} adetle sınırlandı.`,
         });
         continue;
       }
@@ -108,7 +115,7 @@ export async function revalidateCartAgainstTervona(
           key: line.key,
           action: "removed",
           reason: "not_found",
-          message: `"${line.name}" artık satışta değil ve sepetten çıkarıldı.`,
+          message: `"${publicCartLineLabel(line)}" artık satışta değil ve sepetten çıkarıldı.`,
         });
         continue;
       }

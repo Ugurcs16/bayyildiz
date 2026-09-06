@@ -77,12 +77,14 @@ export default async function CategoryPage({ params, searchParams }: Props) {
             {seo.text}
           </p>
         </div>
-        <p className="mt-6 text-xs text-[var(--color-taupe-muted)]">
-          {cat.subtitle}
-          {list.total > 0
-            ? ` · ${list.total} model · sayfa ${list.page}/${list.pageCount}`
-            : null}
-        </p>
+        {list.total > 0 ? (
+          <p className="mt-5 text-xs text-[var(--color-taupe-muted)]">
+            {list.total} model
+            {list.pageCount > 1
+              ? ` · sayfa ${list.page}/${list.pageCount}`
+              : null}
+          </p>
+        ) : null}
         {list.products.length === 0 ? (
           <p className="mt-12 text-center text-sm text-[var(--color-anthracite-soft)]">
             Bu kategoride şu an ürün bulunmuyor. WhatsApp&apos;tan stok

@@ -8,6 +8,7 @@ import {
   normalizeSkuKey,
   parentSkuFromVariantSku,
 } from "@/lib/sku-identity";
+import { publicCartLineLabel } from "@/lib/public-product-identity";
 
 export type IdentityVariant = {
   id: string;
@@ -108,18 +109,16 @@ export function reconcileCartLineIdentity(
 }
 
 export function cartIdentityRejectMessage(
-  line: { name?: string; size?: string; variantSku?: string },
+  line: { name?: string; size?: string; variantSku?: string; model?: string },
   reason: CartIdentityRejectReason,
 ): string {
-  const label = `"${line.name ?? "Ürün"}"${line.size ? ` (${line.size})` : ""}`;
+  const label = `"${publicCartLineLabel(line)}"${line.size ? ` (${line.size})` : ""}`;
   switch (reason) {
     case "product_mismatch":
     case "variant_missing":
       return `${label} katalog yenilendiği için sepetten çıkarıldı. Lütfen ürünü yeniden ekleyin.`;
     case "colorway_mismatch":
-      return `${label} renk / SKU uyuşmazlığı nedeniyle sepetten çıkarıldı${
-        line.variantSku ? ` (${line.variantSku})` : ""
-      }. Lütfen doğru renk yolunu yeniden ekleyin.`;
+      return `${label} renk / SKU uyuşmazlığı nedeniyle sepetten çıkarıldı. Lütfen doğru renk yolunu yeniden ekleyin.`;
     case "size_mismatch":
       return `${label} numara uyuşmazlığı nedeniyle sepetten çıkarıldı. Lütfen ürünü yeniden ekleyin.`;
     case "empty_catalog_sku":

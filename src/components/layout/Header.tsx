@@ -160,8 +160,8 @@ export function Header({ signedIn }: { signedIn: boolean }) {
           <span className="font-display block text-[1.35rem] font-semibold leading-none tracking-tight text-[var(--color-espresso)] sm:text-2xl">
             {SITE_NAME}
           </span>
-          <span className="mt-1 block text-[0.65rem] font-medium uppercase tracking-[0.2em] text-[var(--color-taupe-muted)] sm:text-[0.7rem]">
-            Bursa · Hakiki deri
+          <span className="mt-1 block whitespace-nowrap text-[0.58rem] font-medium uppercase tracking-[0.12em] text-[var(--color-taupe-muted)] sm:text-[0.68rem] sm:tracking-[0.16em]">
+            Bursa · 1989 · Heykel &amp; FSM
           </span>
         </Link>
 

@@ -13,6 +13,10 @@ import { cartLineKey, useCart } from "@/components/providers/cart-context";
 import { SalesToast } from "@/components/ui/SalesToast";
 import type { CatalogProduct, CatalogVariation } from "@/lib/products-normalizer";
 import { buildWhatsAppUrl, productWhatsAppMessage } from "@/lib/whatsapp";
+import {
+  publicProductCode,
+  publicVariantSkuLabel,
+} from "@/lib/public-product-identity";
 
 function priceString(n: number) {
   return String(n);
@@ -70,8 +74,17 @@ export function CatalogProductPurchase({
     return () => window.clearTimeout(id);
   }, [toast]);
 
+  const publicCode = publicProductCode({
+    code: product.code,
+    name: product.name,
+    variantSku: selected?.sku ?? product.code,
+  });
+  const selectedPublicSku = selected
+    ? publicVariantSkuLabel(selected.sku) || publicCode
+    : publicCode;
+
   const wa = buildWhatsAppUrl(
-    productWhatsAppMessage(product.name, product.code),
+    productWhatsAppMessage(publicCode),
     WHATSAPP_NUMBER,
   );
 
@@ -94,9 +107,9 @@ export function CatalogProductPurchase({
     addItem({
       productId: product.id,
       variationId: selected.id,
-      name: product.name,
+      name: publicCode,
       slug: product.slug,
-      model: product.code,
+      model: publicCode,
       size: selected.size,
       variantSku: selected.sku || product.code,
       image: thumb || product.image,
@@ -123,8 +136,8 @@ export function CatalogProductPurchase({
 
   return (
     <>
-      <h1 className="font-display mt-1 line-clamp-3 text-3xl font-semibold tracking-tight text-[var(--color-espresso)] sm:mt-2 sm:line-clamp-none sm:text-4xl">
-        {product.name}
+      <h1 className="font-display mt-1 text-3xl font-semibold tracking-tight text-[var(--color-espresso)] sm:mt-2 sm:text-4xl">
+        {publicCode}
       </h1>
 
       <p className="mt-4 font-display text-3xl font-semibold text-[var(--color-espresso)]">
@@ -220,7 +233,7 @@ export function CatalogProductPurchase({
           <p className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
             <span className="text-[var(--color-taupe-muted)]">SKU</span>
             <span className="font-semibold tracking-wide text-[var(--color-anthracite)]">
-              {selected?.sku ?? product.code}
+              {selectedPublicSku}
             </span>
           </p>
           <p className="mt-2.5 text-[0.65rem] leading-snug text-[var(--color-taupe-muted)] sm:text-[0.7rem]">

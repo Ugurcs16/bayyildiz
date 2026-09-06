@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { WHATSAPP_NUMBER } from "@/lib/constants";
+import { publicProductCode } from "@/lib/public-product-identity";
 import { buildWhatsAppUrl, productWhatsAppMessage } from "@/lib/whatsapp";
 import type { WCProduct, WCVariation } from "@/lib/types/woocommerce";
 import { formatTry, stockLabel } from "@/lib/woocommerce";
@@ -38,8 +39,14 @@ export function ProductPurchasePanel({
   const displayRegular = selected?.regular_price ?? product.regular_price;
   const onSale = selected?.on_sale ?? product.on_sale;
 
+  const publicCode = publicProductCode({
+    name: product.name,
+    code: product.sku,
+    variantSku: product.sku,
+  });
+
   const wa = buildWhatsAppUrl(
-    productWhatsAppMessage(product.name, product.sku),
+    productWhatsAppMessage(publicCode),
     WHATSAPP_NUMBER,
   );
 
@@ -52,9 +59,9 @@ export function ProductPurchasePanel({
       productId: String(product.id),
       variationId: variationKey,
       quantity: qty,
-      name: product.name,
+      name: publicCode,
       slug: product.slug,
-      model: product.sku || String(product.id),
+      model: publicCode,
       size: selectable && selected ? variationLabel(selected) : "Standart",
       variantSku: product.sku
         ? `${product.sku}-${selected?.id ?? "std"}`
@@ -68,14 +75,8 @@ export function ProductPurchasePanel({
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-3xl font-semibold tracking-tight text-[var(--color-espresso)] sm:text-4xl">
-          {product.name}
+          {publicCode}
         </h1>
-        <p className="mt-2 text-sm text-[var(--color-anthracite-soft)]">
-          Model:{" "}
-          <span className="font-medium text-[var(--color-anthracite)]">
-            {product.sku || "—"}
-          </span>
-        </p>
         <p className="mt-2 text-sm font-medium text-[var(--color-taupe-muted)]">
           {stockLabel(
             selected?.stock_status ?? product.stock_status,
