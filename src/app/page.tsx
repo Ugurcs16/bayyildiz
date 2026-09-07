@@ -52,7 +52,7 @@ export default async function HomePage() {
           __html: JSON.stringify(organizationJsonLd),
         }}
       />
-      <HeroSection videoUrl="/hero-video.mp4" />
+      <HeroSection videoUrl="/hero-leonardo.mp4" />
       <HomeCategoryStrip />
       <HomeCatalog products={featured.products} catalogHref={catalogLink} />
       <section

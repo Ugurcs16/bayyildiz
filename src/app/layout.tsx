@@ -14,7 +14,7 @@ const inter = Inter({
 /** Editorial serif: clearer strokes than Cormorant; latin-ext for Turkish glyphs. */
 const display = Source_Serif_4({
   subsets: ["latin", "latin-ext"],
-  weight: ["600", "700"],
+  weight: ["500", "600", "700"],
   variable: "--font-display",
   display: "swap",
 });

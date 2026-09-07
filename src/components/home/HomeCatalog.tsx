@@ -16,7 +16,7 @@ export function HomeCatalog({ products, catalogHref }: Props) {
     >
       <div className="mx-auto max-w-6xl">
         <h2 className="font-display text-3xl font-bold tracking-tight text-[var(--color-espresso)] sm:text-4xl">
-          Öne Çıkan Modeller
+          Öne Çıkanlar
         </h2>
         {products.length === 0 ? (
           <p className="mt-6 text-center text-sm text-[var(--color-anthracite-soft)] sm:mt-8">
