@@ -20,6 +20,8 @@ import {
 } from "@/lib/public-product-identity";
 import { formatTry } from "@/lib/woocommerce";
 
+let checkoutPlaceInFlight = false;
+
 const TRUST_POINTS = [
   "Hakiki deri ürünler",
   "Bursa mağaza güvencesi",
@@ -106,11 +108,18 @@ export function CheckoutForm() {
     };
   }, []);
 
+  useEffect(() => {
+    if (checkoutPlaceInFlight) {
+      lock.current = true;
+      setSubmitting(true);
+    }
+  }, []);
+
   const empty = items.length === 0;
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
-    if (lock.current || submitting || empty) return;
+    if (checkoutPlaceInFlight || lock.current || submitting || empty) return;
 
     const tckn = normalizeIdentityNumber(identityNumber);
     if (!isValidIdentityNumber(tckn)) {
@@ -118,6 +127,7 @@ export function CheckoutForm() {
       return;
     }
 
+    checkoutPlaceInFlight = true;
     lock.current = true;
     setSubmitting(true);
     setError(null);
@@ -144,6 +154,7 @@ export function CheckoutForm() {
       },
     };
 
+    let holdLock = false;
     try {
       const response = await fetch("/api/checkout/place", {
         method: "POST",
@@ -153,6 +164,13 @@ export function CheckoutForm() {
       const body = (await response.json().catch(() => ({}))) as PlaceResponse;
 
       if (response.status === 409) {
+        if (body.code === "PAYMENT_IN_PROGRESS") {
+          setError(
+            body.error ||
+              "Ödeme zaten başlatılıyor. Lütfen bekleyin.",
+          );
+          return;
+        }
         if (Array.isArray(body.items) && body.issues) {
           replaceItems(body.items);
         }
@@ -173,11 +191,13 @@ export function CheckoutForm() {
         const order = body.orderNumber
           ? `?order=${encodeURIComponent(body.orderNumber)}`
           : "";
+        holdLock = true;
         window.location.assign(`/odeme/sonuc${order}`);
         return;
       }
 
       if (body.paymentPageUrl) {
+        holdLock = true;
         window.location.assign(body.paymentPageUrl);
         return;
       }
@@ -186,8 +206,11 @@ export function CheckoutForm() {
     } catch {
       setError("Bağlantı hatası. Sepetiniz korundu; lütfen tekrar deneyin.");
     } finally {
-      lock.current = false;
-      setSubmitting(false);
+      if (!holdLock) {
+        checkoutPlaceInFlight = false;
+        lock.current = false;
+        setSubmitting(false);
+      }
     }
   }
 

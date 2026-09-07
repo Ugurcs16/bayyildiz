@@ -59,6 +59,15 @@ export function checkoutErrorResponse(error: unknown): NextResponse {
           400,
         );
       }
+      if (remote.includes("already in progress")) {
+        return bffJson(
+          {
+            error: "Ödeme zaten başlatılıyor. Lütfen bekleyin.",
+            code: "PAYMENT_IN_PROGRESS",
+          },
+          409,
+        );
+      }
       return bffJson({ error: CUSTOMER_MESSAGES.invalidInput }, 400);
     }
     if (error.status === 429) {

@@ -160,6 +160,19 @@ function testValidTcknInPlacePayload() {
   assert(form.includes("identityNumber: tckn"), "form sends identityNumber");
   assert(form.includes("T.C. Kimlik No"), "form labels TCKN");
   assert(!/\bconsole\.(log|info|debug)\b/.test(form), "form must not log");
+  assert(
+    form.includes("let checkoutPlaceInFlight = false"),
+    "module-level place lock survives remount",
+  );
+  assert(form.includes("let holdLock = false"), "success path can hold the submit lock");
+  assert(
+    form.includes("if (!holdLock)"),
+    "submit lock is not cleared on successful redirect",
+  );
+  assert(
+    form.includes('body.code === "PAYMENT_IN_PROGRESS"'),
+    "form distinguishes in-progress payment from stock 409",
+  );
 
   const client = readFileSync("src/lib/tervona/customer-client.ts", "utf8");
   assert(
@@ -171,6 +184,10 @@ function testValidTcknInPlacePayload() {
   assert(
     place.includes("identityNumber: input.identityNumber"),
     "place initialize receives identityNumber",
+  );
+  assert(
+    place.includes("PAYMENT_IN_PROGRESS"),
+    "place maps in-flight initialize to PAYMENT_IN_PROGRESS",
   );
 }
 
