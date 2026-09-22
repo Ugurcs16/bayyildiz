@@ -9,6 +9,7 @@
     "lint": "eslint",
     "test:checkout": "npx --yes tsx scripts/verify-checkout.ts",
     "test:consent": "npx --yes tsx scripts/verify-consent.ts",
+    "test:images": "npx --yes tsx scripts/verify-product-images.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

@@ -42,6 +42,7 @@ export function HomeCategoryStrip() {
                 src={c.image}
                 alt=""
                 fill
+                unoptimized
                 className="object-cover"
                 sizes="(max-width:767px) 144px, (max-width:1023px) 208px, 224px"
               />

@@ -34,6 +34,7 @@ export function ProductCard({ product, imagePriority = false }: Props) {
           src={product.image}
           alt={imageAlt}
           fill
+          unoptimized
           priority={imagePriority}
           loading={imagePriority ? undefined : "lazy"}
           className="object-cover transition-opacity duration-500 group-hover:opacity-0"
@@ -44,6 +45,7 @@ export function ProductCard({ product, imagePriority = false }: Props) {
             src={product.hoverImage}
             alt=""
             fill
+            unoptimized
             loading="lazy"
             className="object-cover opacity-0 transition-opacity duration-500 group-hover:opacity-100"
             sizes="(max-width:640px) 50vw, (max-width:1024px) 33vw, 25vw"

@@ -129,6 +129,7 @@ export function CartView() {
                     src={line.image || PLACEHOLDER_PRODUCT_IMAGE}
                     alt={publicCartLineLabel(line)}
                     fill
+                    unoptimized
                     className="object-cover"
                     sizes="112px"
                   />

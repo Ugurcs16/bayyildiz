@@ -23,6 +23,7 @@ export function ProductGallery({
           src={current.src}
           alt={current.alt || productName}
           fill
+          unoptimized
           className="object-cover"
           sizes="(max-width:1024px) 100vw, 50vw"
           priority
@@ -45,6 +46,7 @@ export function ProductGallery({
                 src={img.src}
                 alt=""
                 fill
+                unoptimized
                 className="object-cover"
                 sizes="64px"
               />
