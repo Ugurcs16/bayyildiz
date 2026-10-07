@@ -15,7 +15,7 @@ export function MobileStickyBar() {
           rel="noopener noreferrer"
           className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] text-xs font-semibold text-white shadow-sm"
         >
-          {"WhatsApp'tan yaz"}
+          {"WhatsApp ile Sipariş Oluştur"}
         </a>
       </div>
     </div>
