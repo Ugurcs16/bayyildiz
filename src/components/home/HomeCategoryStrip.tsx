@@ -15,7 +15,7 @@ const CATEGORIES = [
   {
     title: "Sneaker",
     href: "/kategori/sneaker",
-    image: null,
+    image: "/categories/sneaker.webp",
   },
   {
     title: "Outdoor",
@@ -43,27 +43,18 @@ export function HomeCategoryStrip() {
               href={c.href}
               className="relative h-24 w-36 shrink-0 snap-start overflow-hidden rounded-xl ring-1 ring-black/[0.06] transition-[transform,box-shadow] hover:shadow-md active:scale-[0.98] md:h-32 md:w-52 md:shrink-0 lg:h-36 lg:w-56"
             >
-              {c.image ? (
-                <>
-                  <Image
-                    src={c.image}
-                    alt=""
-                    fill
-                    unoptimized
-                    className="object-cover"
-                    sizes="(max-width:767px) 144px, (max-width:1023px) 208px, 224px"
-                  />
-                  <div
-                    className="absolute inset-0 bg-black/30"
-                    aria-hidden
-                  />
-                </>
-              ) : (
-                <div
-                  className="absolute inset-0 bg-[linear-gradient(145deg,var(--color-espresso)_0%,var(--color-anthracite)_100%)]"
-                  aria-hidden
-                />
-              )}
+              <Image
+                src={c.image}
+                alt=""
+                fill
+                unoptimized
+                className="object-cover"
+                sizes="(max-width:767px) 144px, (max-width:1023px) 208px, 224px"
+              />
+              <div
+                className="absolute inset-0 bg-black/30"
+                aria-hidden
+              />
               <span className="absolute inset-0 flex items-center justify-center px-2 text-center text-sm font-semibold text-white drop-shadow-sm md:text-base lg:text-lg">
                 {c.title}
               </span>
