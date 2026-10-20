@@ -18,10 +18,10 @@ export function CampaignSection() {
         </div>
         <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
           <Link
-            href="/kategori/yeni-sezon"
+            href="/kategori/sneaker"
             className="inline-flex min-h-12 min-w-[200px] items-center justify-center rounded-xl bg-[var(--color-espresso)] px-6 text-sm font-semibold text-white transition-colors hover:bg-[var(--color-espresso-hover)]"
           >
-            Yeni sezonu aç
+            Sneaker’ları aç
           </Link>
           <Link
             href="/#one-cikanlar"

@@ -24,6 +24,15 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: "/kategori/yeni-sezon",
+        destination: "/kategori/sneaker",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

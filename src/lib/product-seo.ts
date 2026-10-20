@@ -82,11 +82,11 @@ export function getCategorySeoIntro(slug: string): {
       metaDescription:
         "Erkek bot modelleri: hakiki deri, Bursa güvencesi. Kışa hazır seçenekler.",
     },
-    "yeni-sezon": {
-      heading: "Yeni Sezon",
-      text: "Sezonun öne çıkan yeni modelleri.",
+    sneaker: {
+      heading: "Sneaker Modelleri",
+      text: "Günlük kullanım için spor ve şık sneaker seçenekleri.",
       metaDescription:
-        "Yeni sezon erkek ayakkabı modelleri. Hakiki deri, Bursa’dan hızlı kargo imkânı.",
+        "Erkek sneaker modelleri. Hakiki deri ve konforlu taban seçenekleri. Bursa’dan güvenilir alışveriş.",
     },
   };
   const cat = map[slug];

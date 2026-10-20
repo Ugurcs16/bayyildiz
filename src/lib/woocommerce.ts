@@ -36,7 +36,7 @@ export const MOCK_PRODUCTS: WCProduct[] = [
     images: [mockImage(MOCK_IMAGES[0], 1), mockImage(MOCK_IMAGES[1], 2)],
     categories: [
       { id: 1, name: "Günlük", slug: "gunluk" },
-      { id: 5, name: "Yeni Sezon", slug: "yeni-sezon" },
+      { id: 5, name: "Sneaker", slug: "sneaker" },
     ],
     attributes: [],
     permalink: "https://example.com/urun/deri-gunluk-loafer-espresso",
@@ -127,7 +127,7 @@ export const MOCK_PRODUCTS: WCProduct[] = [
     images: [mockImage(MOCK_IMAGES[1], 7)],
     categories: [
       { id: 1, name: "Günlük", slug: "gunluk" },
-      { id: 5, name: "Yeni Sezon", slug: "yeni-sezon" },
+      { id: 5, name: "Sneaker", slug: "sneaker" },
     ],
     attributes: [],
     permalink: "https://example.com/urun/casual-sneaker-kum-beji",
@@ -190,7 +190,7 @@ export const MOCK_PRODUCTS: WCProduct[] = [
     images: [mockImage(MOCK_IMAGES[0], 10)],
     categories: [
       { id: 4, name: "Bot", slug: "bot" },
-      { id: 5, name: "Yeni Sezon", slug: "yeni-sezon" },
+      { id: 5, name: "Sneaker", slug: "sneaker" },
     ],
     attributes: [],
     permalink: "https://example.com/urun/sehir-botu-kahverengi",
@@ -231,7 +231,7 @@ export const MOCK_PRODUCTS: WCProduct[] = [
     short_description: "Yeni sezon renkleri, hakiki deri kaplama.",
     description: "<p>Konforlu iç taban, hafif dış taban.</p>",
     images: [mockImage(MOCK_IMAGES[2], 12)],
-    categories: [{ id: 5, name: "Yeni Sezon", slug: "yeni-sezon" }],
+    categories: [{ id: 5, name: "Sneaker", slug: "sneaker" }],
     attributes: [],
     permalink: "https://example.com/urun/yeni-sezon-deri-sneaker",
   },
@@ -274,7 +274,7 @@ const MOCK_CATEGORIES: WCCategory[] = [
   { id: 2, name: "Klasik", slug: "klasik", parent: 0, count: 2 },
   { id: 3, name: "Outdoor", slug: "outdoor", parent: 0, count: 2 },
   { id: 4, name: "Bot", slug: "bot", parent: 0, count: 2 },
-  { id: 5, name: "Yeni Sezon", slug: "yeni-sezon", parent: 0, count: 4 },
+  { id: 5, name: "Sneaker", slug: "sneaker", parent: 0, count: 4 },
 ];
 
 function getCredentials() {

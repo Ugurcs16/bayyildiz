@@ -11,9 +11,9 @@ export const NAV_ITEMS = [
   { href: "/", label: "Ana Sayfa" },
   { href: "/kategori/gunluk", label: "Günlük" },
   { href: "/kategori/klasik", label: "Klasik" },
+  { href: "/kategori/sneaker", label: "Sneaker" },
   { href: "/kategori/outdoor", label: "Outdoor" },
   { href: "/kategori/bot", label: "Bot" },
-  { href: "/kategori/yeni-sezon", label: "Yeni Sezon" },
   { href: "/hakkimizda", label: "Hakkımızda" },
   { href: "/#iletisim", label: "İletişim" },
 ] as const;
@@ -32,9 +32,9 @@ export const LEGAL_ROUTES = {
 export const CATEGORY_QUICK = [
   { slug: "gunluk", title: "Günlük", subtitle: "Her güne rahat adım" },
   { slug: "klasik", title: "Klasik", subtitle: "Zamansız şıklık" },
+  { slug: "sneaker", title: "Sneaker", subtitle: "Spor şıklık" },
   { slug: "outdoor", title: "Outdoor", subtitle: "Dayanıklı taban" },
   { slug: "bot", title: "Bot", subtitle: "Kışa hazır çizgiler" },
-  { slug: "yeni-sezon", title: "Yeni Sezon", subtitle: "Yeni gelen modeller" },
 ] as const;
 
 export const TRUST_BADGES = [

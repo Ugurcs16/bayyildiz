@@ -24,9 +24,9 @@ export type CatalogProduct = DummyProduct & {
 const CATEGORY_LABEL_BY_ID: Record<CategoryId, string> = {
   gunluk: "Günlük",
   klasik: "Klasik",
+  sneaker: "Sneaker",
   outdoor: "Outdoor",
   bot: "Bot",
-  "yeni-sezon": "Yeni Sezon",
 };
 
 function slugify(value: string) {
@@ -68,7 +68,13 @@ function mapCategory(raw: string): CategoryId {
   if (value.includes("bot")) return "bot";
   if (value.includes("outdoor")) return "outdoor";
   if (value.includes("klasik")) return "klasik";
-  if (value.includes("yeni sezon")) return "yeni-sezon";
+  if (
+    value.includes("sneaker") ||
+    value.includes("yeni sezon") ||
+    value.includes("yeni-sezon")
+  ) {
+    return "sneaker";
+  }
   if (value.includes("günlük") || value.includes("gunluk")) return "gunluk";
   return "gunluk";
 }

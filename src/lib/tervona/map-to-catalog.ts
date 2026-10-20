@@ -5,9 +5,9 @@ import type { StorefrontProduct, StorefrontStockState, StorefrontVariant } from 
 const CATEGORY_SLUGS: CategoryId[] = [
   "gunluk",
   "klasik",
+  "sneaker",
   "outdoor",
   "bot",
-  "yeni-sezon",
 ];
 
 function parseMoney(amount: string | undefined): number {
@@ -24,13 +24,15 @@ function stripHtml(text: string) {
 
 function mapCategory(slug: string | null | undefined): CategoryId {
   const value = (slug ?? "").toLocaleLowerCase("tr-TR");
+  // Eski "yeni-sezon" slug'ı Sneaker'a taşındı.
+  if (value === "yeni-sezon" || value === "yenisezon") return "sneaker";
   if ((CATEGORY_SLUGS as string[]).includes(value)) {
     return value as CategoryId;
   }
   if (value.includes("bot")) return "bot";
   if (value.includes("outdoor")) return "outdoor";
   if (value.includes("klasik") || value.includes("classic")) return "klasik";
-  if (value.includes("sezon") || value.includes("yeni")) return "yeni-sezon";
+  if (value.includes("sneaker")) return "sneaker";
   if (value.includes("gunluk") || value.includes("günlük") || value.includes("casual")) {
     return "gunluk";
   }

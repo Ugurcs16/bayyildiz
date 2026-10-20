@@ -1,9 +1,9 @@
 export type CategoryId =
   | "gunluk"
   | "klasik"
+  | "sneaker"
   | "outdoor"
-  | "bot"
-  | "yeni-sezon";
+  | "bot";
 
 export type DummyProduct = {
   id: string;
@@ -29,9 +29,9 @@ export const CATEGORIES: {
 }[] = [
   { id: "gunluk", title: "Günlük", subtitle: "Her güne rahat adım" },
   { id: "klasik", title: "Klasik", subtitle: "Zamansız şıklık" },
+  { id: "sneaker", title: "Sneaker", subtitle: "Spor şıklık" },
   { id: "outdoor", title: "Outdoor", subtitle: "Dayanıklı taban" },
   { id: "bot", title: "Bot", subtitle: "Kışa hazır" },
-  { id: "yeni-sezon", title: "Yeni Sezon", subtitle: "Taze modeller" },
 ];
 
 export const DUMMY_PRODUCTS: DummyProduct[] = [
@@ -105,7 +105,7 @@ export const DUMMY_PRODUCTS: DummyProduct[] = [
       "https://images.unsplash.com/photo-1512374382149-233c42b6a83b?w=1200&q=80&auto=format&fit=crop",
     teaser: "Yeni sezon renkleri, hafif taban.",
     stock: "var",
-    category: "yeni-sezon",
+    category: "sneaker",
   },
   {
     id: "6",
@@ -145,7 +145,7 @@ export const DUMMY_PRODUCTS: DummyProduct[] = [
     imageAlt: "Kahverengi şehir botu",
     teaser: "Şehir kullanımına uygun klasik bot silüeti.",
     stock: "az",
-    category: "yeni-sezon",
+    category: "bot",
   },
 ];
 
