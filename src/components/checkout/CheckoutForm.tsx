@@ -327,23 +327,48 @@ export function CheckoutForm() {
                 </div>
                 {havaleUiEnabled && paymentMethod === "bank_transfer" ? (
                   <>
-                    <div className="flex items-center justify-between text-sm text-emerald-900">
-                      <span>Havale / EFT indirimi (%5)</span>
-                      <span className="font-semibold tabular-nums">
-                        −{formatTryFromKurus(havalePreview.discountKurus)}
-                      </span>
-                    </div>
+                    {havalePreview.percentDiscountKurus > 0 ? (
+                      <div className="flex items-center justify-between text-sm text-emerald-900">
+                        <span>Havale / EFT indirimi (%5)</span>
+                        <span className="font-semibold tabular-nums">
+                          −
+                          {formatTryFromKurus(
+                            havalePreview.percentDiscountKurus,
+                          )}
+                        </span>
+                      </div>
+                    ) : null}
+                    {havalePreview.roundingDiscountKurus > 0 ? (
+                      <div className="flex items-center justify-between text-sm text-emerald-900">
+                        <span>Size özel ek indirim</span>
+                        <span className="font-semibold tabular-nums">
+                          −
+                          {formatTryFromKurus(
+                            havalePreview.roundingDiscountKurus,
+                          )}
+                        </span>
+                      </div>
+                    ) : null}
                     <div className="flex items-center justify-between pt-1">
                       <span className="text-sm font-semibold text-[var(--color-espresso)]">
-                        Ödenecek (önizleme)
+                        Ödenecek toplam
                       </span>
                       <span className="text-lg font-semibold tabular-nums text-[var(--color-espresso)]">
-                        {formatTryFromKurus(havalePreview.payableMerchandiseKurus)}
+                        {formatTryFromKurus(
+                          havalePreview.payableMerchandiseKurus,
+                        )}
                       </span>
                     </div>
+                    {havalePreview.percentDiscountKurus > 0 &&
+                    havalePreview.roundingDiscountKurus > 0 ? (
+                      <p className="text-xs font-medium text-emerald-900">
+                        Havale/EFT ile %5 indirim ve size özel ek indirim
+                        kazandınız!
+                      </p>
+                    ) : null}
                     <p className="text-xs text-[var(--color-taupe-muted)]">
-                      %5 indirim yalnızca ürün tutarına uygulanır (önizleme).
-                      Kesin tutar Tervona sipariş yanıtından gelir.
+                      Önizleme tutarıdır. Kesin ödenecek tutar Tervona sipariş
+                      yanıtından gelir.
                     </p>
                   </>
                 ) : (

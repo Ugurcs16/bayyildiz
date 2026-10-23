@@ -16,7 +16,10 @@ import {
   sanitizeOrderLookup,
   type CheckoutViewKind,
 } from "@/lib/checkout/result-state";
-import type { TervonaBankTransferInstructions } from "@/lib/tervona/havale-types";
+import type {
+  TervonaBankTransferDiscount,
+  TervonaBankTransferInstructions,
+} from "@/lib/tervona/havale-types";
 
 export type CheckoutResultView = {
   kind: CheckoutViewKind;
@@ -27,6 +30,53 @@ export type CheckoutResultView = {
   /** Present only when Tervona returns bank instructions — never invented locally. */
   bankTransfer?: TervonaBankTransferInstructions;
 };
+
+function readNonNegInt(value: unknown): number | null {
+  if (typeof value !== "number" || !Number.isFinite(value)) return null;
+  const n = Math.trunc(value);
+  if (n !== value || n < 0) return null;
+  return n;
+}
+
+/** Accept complete API discount only — never invent from amountDue. */
+function readBankTransferDiscount(
+  raw: Record<string, unknown>,
+): TervonaBankTransferDiscount | undefined {
+  const discountRaw = raw.discount;
+  if (!discountRaw || typeof discountRaw !== "object") return undefined;
+  const d = discountRaw as Record<string, unknown>;
+  const percentDiscountMinor = readNonNegInt(d.percentDiscountMinor);
+  const roundingDiscountMinor = readNonNegInt(d.roundingDiscountMinor);
+  const totalDiscountMinor = readNonNegInt(d.totalDiscountMinor);
+  if (
+    percentDiscountMinor === null ||
+    roundingDiscountMinor === null ||
+    totalDiscountMinor === null ||
+    percentDiscountMinor + roundingDiscountMinor !== totalDiscountMinor
+  ) {
+    return undefined;
+  }
+  const percentDiscount =
+    typeof d.percentDiscount === "number" && Number.isFinite(d.percentDiscount)
+      ? d.percentDiscount
+      : percentDiscountMinor / 100;
+  const roundingDiscount =
+    typeof d.roundingDiscount === "number" && Number.isFinite(d.roundingDiscount)
+      ? d.roundingDiscount
+      : roundingDiscountMinor / 100;
+  const totalDiscount =
+    typeof d.totalDiscount === "number" && Number.isFinite(d.totalDiscount)
+      ? d.totalDiscount
+      : totalDiscountMinor / 100;
+  return {
+    percentDiscount,
+    percentDiscountMinor,
+    roundingDiscount,
+    roundingDiscountMinor,
+    totalDiscount,
+    totalDiscountMinor,
+  };
+}
 
 function readBankTransfer(
   row: TervonaCheckoutStatusResponse,
@@ -55,6 +105,7 @@ function readBankTransfer(
     typeof raw.amountDueMinor === "number" && Number.isFinite(raw.amountDueMinor)
       ? Math.trunc(raw.amountDueMinor)
       : undefined;
+  const discount = readBankTransferDiscount(raw as Record<string, unknown>);
   return {
     amountDue,
     amountDueMinor,
@@ -64,6 +115,7 @@ function readBankTransfer(
     paymentReference,
     bankName: typeof raw.bankName === "string" ? raw.bankName : undefined,
     expiresAt: typeof raw.expiresAt === "string" ? raw.expiresAt : undefined,
+    ...(discount ? { discount } : {}),
   };
 }
 

@@ -12,8 +12,22 @@ export type TervonaCreateOrderHavaleRequestExtras = {
 };
 
 /**
+ * Optional discount breakdown on new havale orders.
+ * Older snapshots omit `discount` entirely — never invent it locally.
+ */
+export type TervonaBankTransferDiscount = {
+  percentDiscount: number;
+  percentDiscountMinor: number;
+  roundingDiscount: number;
+  roundingDiscountMinor: number;
+  totalDiscount: number;
+  totalDiscountMinor: number;
+};
+
+/**
  * Create-order / checkout-status bankTransfer object.
  * IBAN and beneficiary come only from Tervona env — never hardcode in Bayyıldız.
+ * `amountDueMinor` is the authoritative payable amount.
  */
 export type TervonaBankTransferInstructions = {
   beneficiaryName: string;
@@ -24,6 +38,7 @@ export type TervonaBankTransferInstructions = {
   currency: "TRY";
   bankName?: string;
   expiresAt?: string;
+  discount?: TervonaBankTransferDiscount;
 };
 
 export type TervonaBankTransferCreateResponse = {

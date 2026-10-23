@@ -266,6 +266,15 @@ export type TervonaBankTransferPayload = {
   currency: string;
   bankName?: string;
   expiresAt?: string;
+  /** Present on new havale orders; omitted on older snapshots. */
+  discount?: {
+    percentDiscount: number;
+    percentDiscountMinor: number;
+    roundingDiscount: number;
+    roundingDiscountMinor: number;
+    totalDiscount: number;
+    totalDiscountMinor: number;
+  };
 };
 
 export type TervonaCreateOrderResponse = {

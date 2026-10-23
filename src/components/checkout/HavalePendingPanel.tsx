@@ -39,6 +39,10 @@ export function HavalePendingPanel({
   const iban = (instructions.iban ?? "").trim();
   const beneficiary = (instructions.beneficiaryName ?? "").trim();
   const expiresLabel = formatExpiry(instructions.expiresAt);
+  const discount = instructions.discount;
+  const percentMinor = discount?.percentDiscountMinor ?? 0;
+  const roundingMinor = discount?.roundingDiscountMinor ?? 0;
+  const showCampaign = percentMinor > 0 && roundingMinor > 0;
 
   return (
     <div className="rounded-2xl border border-amber-200/80 bg-amber-50/60 px-5 py-6 sm:px-6 sm:py-7">
@@ -71,9 +75,35 @@ export function HavalePendingPanel({
           <CopyFieldButton value={orderNumber} />
         </div>
 
+        {discount ? (
+          <div className="space-y-2 border-b border-black/[0.06] pb-3">
+            {percentMinor > 0 ? (
+              <div className="flex items-center justify-between text-sm text-emerald-900">
+                <dt>Havale / EFT indirimi (%5)</dt>
+                <dd className="font-semibold tabular-nums">
+                  −{formatTryFromKurus(percentMinor)}
+                </dd>
+              </div>
+            ) : null}
+            {roundingMinor > 0 ? (
+              <div className="flex items-center justify-between text-sm text-emerald-900">
+                <dt>Size özel ek indirim</dt>
+                <dd className="font-semibold tabular-nums">
+                  −{formatTryFromKurus(roundingMinor)}
+                </dd>
+              </div>
+            ) : null}
+            {showCampaign ? (
+              <p className="text-xs font-medium text-emerald-900">
+                Havale/EFT ile %5 indirim ve size özel ek indirim kazandınız!
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+
         <div className="flex flex-col gap-1 border-b border-black/[0.06] pb-3">
           <dt className="text-xs font-semibold uppercase tracking-wider text-[var(--color-taupe-muted)]">
-            Ödenecek tutar (%5 indirimli)
+            Ödenecek tutar
           </dt>
           <dd className="text-lg font-semibold tabular-nums text-[var(--color-espresso)]">
             {amount}

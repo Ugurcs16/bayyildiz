@@ -24,6 +24,17 @@ function tryAmountToKurus(amount) {
   return Math.round(n * 100);
 }
 
+const HAVALE_EFT_ROUNDING_MINOR = 5_000;
+
+function bankTransferRoundingDiscountMinor(afterPercentMinor) {
+  if (!Number.isInteger(afterPercentMinor) || afterPercentMinor < 0) return 0;
+  const rounded =
+    Math.floor(afterPercentMinor / HAVALE_EFT_ROUNDING_MINOR) *
+    HAVALE_EFT_ROUNDING_MINOR;
+  if (rounded <= 0) return 0;
+  return afterPercentMinor - rounded;
+}
+
 function previewHavaleDiscount(lines, percent = 5) {
   let merchandiseKurus = 0;
   for (const line of lines) {
@@ -33,11 +44,21 @@ function previewHavaleDiscount(lines, percent = 5) {
         : 0;
     merchandiseKurus += tryAmountToKurus(line.price) * qty;
   }
-  const discountKurus = percentOfKurus(merchandiseKurus, percent);
+  const percentDiscountKurus = percentOfKurus(merchandiseKurus, percent);
+  const afterPercentKurus = Math.max(0, merchandiseKurus - percentDiscountKurus);
+  const roundingDiscountKurus =
+    bankTransferRoundingDiscountMinor(afterPercentKurus);
   return {
     merchandiseKurus,
-    discountKurus,
-    payableMerchandiseKurus: Math.max(0, merchandiseKurus - discountKurus),
+    percentDiscountKurus,
+    roundingDiscountKurus,
+    totalDiscountKurus: percentDiscountKurus + roundingDiscountKurus,
+    afterPercentKurus,
+    payableMerchandiseKurus: Math.max(
+      0,
+      afterPercentKurus - roundingDiscountKurus,
+    ),
+    discountKurus: percentDiscountKurus,
   };
 }
 
@@ -68,15 +89,34 @@ function testMoneyMatchesTervona() {
     percentOfKurus(1, 5) === Math.floor((1 * 5 + 50) / 100),
     "1 kurus edge",
   );
-  const breakdown = previewHavaleDiscount([
+
+  // After-%5 amounts → floor to 50 TL
+  assert(bankTransferRoundingDiscountMinor(399_650) === 4_650, "3996.50→3950");
+  assert(bankTransferRoundingDiscountMinor(394_450) === 4_450, "3944.50→3900");
+  assert(bankTransferRoundingDiscountMinor(393_650) === 3_650, "3936.50→3900");
+  assert(bankTransferRoundingDiscountMinor(569_050) === 4_050, "5690.50→5650");
+  assert(bankTransferRoundingDiscountMinor(400_000) === 0, "exact 50 TL step");
+  assert(bankTransferRoundingDiscountMinor(4_000) === 0, "below 50 TL");
+  assert(bankTransferRoundingDiscountMinor(0) === 0, "zero");
+
+  // Full cart: 5990 → %5 then floor
+  const example = previewHavaleDiscount([{ price: "5990", quantity: 1 }]);
+  assert(example.merchandiseKurus === 599_000, "5990 merchandise");
+  assert(example.percentDiscountKurus === 29_950, "5990 %5");
+  assert(example.afterPercentKurus === 569_050, "after %5");
+  assert(example.roundingDiscountKurus === 4_050, "rounding 40.50");
+  assert(example.payableMerchandiseKurus === 565_000, "payable 5650");
+
+  const multi = previewHavaleDiscount([
     { price: "1000", quantity: 2 },
     { price: "500.50", quantity: 1 },
   ]);
-  assert(breakdown.merchandiseKurus === 250050, "merchandise");
-  assert(breakdown.discountKurus === 12503, "discount");
+  assert(multi.merchandiseKurus === 250_050, "multi merchandise");
+  assert(multi.percentDiscountKurus === 12_503, "multi %5");
   assert(
-    breakdown.payableMerchandiseKurus === 250050 - 12503,
-    "payable",
+    multi.payableMerchandiseKurus ===
+      multi.afterPercentKurus - multi.roundingDiscountKurus,
+    "multi payable",
   );
 }
 
@@ -128,6 +168,24 @@ function testSourceIntegration() {
   assert(form.includes("awaiting_transfer"), "redirect on awaiting");
   assert(form.includes("isHavaleEftEnabledClient"), "UI gated");
   assert(form.includes("previewHavaleDiscount"), "live discount preview");
+  assert(form.includes("Size özel ek indirim"), "rounding line in checkout");
+  assert(form.includes("Ödenecek toplam"), "payable total label");
+  assert(
+    form.includes("roundingDiscountKurus > 0"),
+    "hide zero rounding campaign pieces",
+  );
+
+  const discountLib = readFileSync("src/lib/checkout/havale-discount.ts", "utf8");
+  assert(discountLib.includes("HAVALE_EFT_ROUNDING_MINOR"), "rounding step");
+  assert(
+    discountLib.includes("bankTransferRoundingDiscountMinor"),
+    "rounding helper",
+  );
+
+  const types = readFileSync("src/lib/tervona/havale-types.ts", "utf8");
+  assert(types.includes("TervonaBankTransferDiscount"), "discount type");
+  assert(types.includes("roundingDiscountMinor"), "rounding field");
+  assert(types.includes("discount?:"), "optional discount");
 
   const panel = readFileSync(
     "src/components/checkout/HavalePendingPanel.tsx",
@@ -145,6 +203,8 @@ function testSourceIntegration() {
     !panel.includes("instructions.paymentReference"),
     "order ref not shown as transfer description",
   );
+  assert(panel.includes("instructions.discount"), "API discount only");
+  assert(panel.includes("amountDueMinor"), "authoritative payable");
   assert(panel.includes("Fırat Coşkun"), "BTSO membership note");
   assert(
     panel.includes("Bursa Ticaret ve Sanayi Odası"),
@@ -176,6 +236,17 @@ function testSourceIntegration() {
   const load = readFileSync("src/lib/checkout/load-result.ts", "utf8");
   assert(load.includes("guestLookupMatchesCookie"), "HMAC guest cookie");
   assert(load.includes("bankTransfer"), "reads bankTransfer from status");
+  assert(load.includes("readBankTransferDiscount"), "parses optional discount");
+  assert(
+    load.includes("never invent") || load.includes("Accept complete API discount"),
+    "no invented discount",
+  );
+}
+
+function testLegacyDiscountOmitted() {
+  const load = readFileSync("src/lib/checkout/load-result.ts", "utf8");
+  // Incomplete discount must not be invented — validation requires all minors.
+  assert(load.includes("percentDiscountMinor + roundingDiscountMinor"), "sum check");
 }
 
 function testIdempotencyAndRegressionHints() {
@@ -200,4 +271,5 @@ testMoneyMatchesTervona();
 testStatusCartAndAccess();
 testSourceIntegration();
 testIdempotencyAndRegressionHints();
+testLegacyDiscountOmitted();
 console.log("verify-havale-eft: ok");
