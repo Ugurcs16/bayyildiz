@@ -3,6 +3,7 @@ import { CUSTOMER_MESSAGES } from "@/lib/customer/messages";
 import { trustedClientIp } from "@/lib/customer/request-guard";
 import { readCustomerSessionToken } from "@/lib/customer/session-cookie";
 import { readIdempotencyCookie } from "@/lib/checkout/cookies";
+import { isHavaleEftEnabledServer } from "@/lib/checkout/features";
 import { parseCheckoutPlaceBody, readCheckoutJson } from "@/lib/checkout/parse";
 import {
   attachCheckoutCookies,
@@ -30,6 +31,16 @@ export async function POST(request: Request) {
   const parsed = parseCheckoutPlaceBody(body);
   if (parsed instanceof Response) return parsed;
 
+  if (parsed.paymentMethod === "bank_transfer" && !isHavaleEftEnabledServer()) {
+    return bffJson(
+      {
+        error: "Havale / EFT ödeme yöntemi şu an kapalı.",
+        code: "HAVALE_DISABLED",
+      },
+      403,
+    );
+  }
+
   let created: CreatedCheckoutOrder | undefined;
   try {
     const existing = await readIdempotencyCookie();
@@ -43,6 +54,18 @@ export async function POST(request: Request) {
     });
     if (order instanceof Response) return order;
     created = order;
+
+    // Havale/EFT: never call iyzico — Tervona already set awaiting_transfer.
+    if (parsed.paymentMethod === "bank_transfer") {
+      const response = bffJson({
+        orderId: created.orderId,
+        orderNumber: created.orderNumber,
+        status: created.paymentStatus || "awaiting_transfer",
+        amount: created.amount,
+        currency: created.currency,
+      });
+      return attachCheckoutCookies(response, created);
+    }
 
     const paid = await initializePaymentForCheckout({
       orderId: created.orderId,

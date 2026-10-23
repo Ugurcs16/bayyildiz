@@ -2,6 +2,11 @@ import { bffError, bffJson } from "@/lib/customer/bff";
 import { CUSTOMER_MESSAGES } from "@/lib/customer/messages";
 import type { CartLine } from "@/components/providers/cart-context";
 import { parseIdentityNumber } from "@/lib/checkout/identity-number";
+import {
+  defaultCheckoutPaymentMethod,
+  parseCheckoutPaymentMethod,
+  type CheckoutPaymentMethod,
+} from "@/lib/checkout/payment-method";
 
 export const CHECKOUT_BODY_MAX_BYTES = 32 * 1024;
 
@@ -79,6 +84,8 @@ export type CheckoutPlaceInput = {
   identityNumber: string;
   /** Optional client-generated attempt key for double-submit safety. */
   checkoutAttemptKey?: string;
+  /** Defaults to card. bank_transfer rejected unless feature flag is on. */
+  paymentMethod: CheckoutPaymentMethod;
 };
 
 export function parseCheckoutPlaceBody(
@@ -156,6 +163,15 @@ export function parseCheckoutPlaceBody(
     body.checkoutAttemptKey ?? body.idempotencyKey,
   );
 
+  let paymentMethod = defaultCheckoutPaymentMethod();
+  if (body.paymentMethod !== undefined && body.paymentMethod !== null && body.paymentMethod !== "") {
+    const parsedMethod = parseCheckoutPaymentMethod(body.paymentMethod);
+    if (!parsedMethod) {
+      return bffJson({ error: CUSTOMER_MESSAGES.invalidInput, code: "PAYMENT_METHOD_INVALID" }, 400);
+    }
+    paymentMethod = parsedMethod;
+  }
+
   return {
     items,
     orderItems,
@@ -170,6 +186,7 @@ export function parseCheckoutPlaceBody(
     },
     identityNumber,
     checkoutAttemptKey,
+    paymentMethod,
   };
 }
 

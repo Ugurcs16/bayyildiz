@@ -76,6 +76,26 @@ export function checkoutErrorResponse(error: unknown): NextResponse {
     if (error.status === 401) {
       return bffJson({ error: CUSTOMER_MESSAGES.unauthorized }, 401);
     }
+    if (error.code === "HAVALE_UNAVAILABLE") {
+      return bffJson(
+        {
+          error:
+            "Havale / EFT şu an kullanılamıyor. Lütfen kart ile ödeyin veya daha sonra deneyin.",
+          code: "HAVALE_UNAVAILABLE",
+        },
+        503,
+      );
+    }
+    if (error.code === "IDEMPOTENCY_CONFLICT") {
+      return bffJson(
+        {
+          error:
+            "Bu sipariş denemesi farklı bir ödeme yöntemiyle zaten kullanıldı. Sepeti yenileyip tekrar deneyin.",
+          code: "IDEMPOTENCY_CONFLICT",
+        },
+        409,
+      );
+    }
     return bffJson(
       { error: CUSTOMER_MESSAGES.unavailable },
       error.status >= 500 ? error.status : 503,
@@ -87,6 +107,9 @@ export function checkoutErrorResponse(error: unknown): NextResponse {
 export type CreatedCheckoutOrder = {
   orderId: string;
   orderNumber: string;
+  paymentStatus: string;
+  amount: number;
+  currency: string;
   access: CheckoutAccessCookie;
   idempotency: CheckoutIdempotencyCookie;
 };
@@ -143,11 +166,15 @@ export async function createStorefrontOrderForCheckout(input: {
     mint: mintIdempotencyKey,
   });
 
+  const paymentMethod = input.parsed.paymentMethod ?? "card";
   const created = await tervonaCreateStorefrontOrder({
     payload: {
       items: orderItems,
       customer: input.parsed.customer,
       shippingAddress: input.parsed.shippingAddress,
+      ...(paymentMethod === "bank_transfer"
+        ? { paymentMethod: "bank_transfer" }
+        : {}),
     },
     idempotencyKey: idempotency.key,
     sessionToken: input.sessionToken,
@@ -162,6 +189,9 @@ export async function createStorefrontOrderForCheckout(input: {
   return {
     orderId: created.orderId,
     orderNumber: created.orderNumber,
+    paymentStatus: created.paymentStatus || "pending",
+    amount: typeof created.amount === "number" ? created.amount : 0,
+    currency: created.currency || "TRY",
     access: {
       orderId: created.orderId,
       orderNumber: created.orderNumber,

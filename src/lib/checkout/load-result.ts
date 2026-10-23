@@ -16,6 +16,7 @@ import {
   sanitizeOrderLookup,
   type CheckoutViewKind,
 } from "@/lib/checkout/result-state";
+import type { TervonaBankTransferInstructions } from "@/lib/tervona/havale-types";
 
 export type CheckoutResultView = {
   kind: CheckoutViewKind;
@@ -23,15 +24,62 @@ export type CheckoutResultView = {
   orderNumber?: string;
   amount?: number;
   currency?: string;
+  /** Present only when Tervona returns bank instructions — never invented locally. */
+  bankTransfer?: TervonaBankTransferInstructions;
 };
 
-function viewFromStatus(row: TervonaCheckoutStatusResponse): CheckoutResultView {
+function readBankTransfer(
+  row: TervonaCheckoutStatusResponse,
+): TervonaBankTransferInstructions | undefined {
+  const raw = row.bankTransfer;
+  if (!raw || typeof raw !== "object") return undefined;
+  const beneficiaryName =
+    typeof raw.beneficiaryName === "string" ? raw.beneficiaryName.trim() : "";
+  const iban = typeof raw.iban === "string" ? raw.iban.trim() : "";
+  const paymentReference =
+    typeof raw.paymentReference === "string"
+      ? raw.paymentReference.trim()
+      : typeof row.orderNumber === "string"
+        ? row.orderNumber.trim()
+        : "";
+  const amountDue =
+    typeof raw.amountDue === "number" && Number.isFinite(raw.amountDue)
+      ? raw.amountDue
+      : typeof row.amount === "number" && Number.isFinite(row.amount)
+        ? row.amount
+        : NaN;
+  if (!beneficiaryName || !iban || !paymentReference || !Number.isFinite(amountDue)) {
+    return undefined;
+  }
+  const amountDueMinor =
+    typeof raw.amountDueMinor === "number" && Number.isFinite(raw.amountDueMinor)
+      ? Math.trunc(raw.amountDueMinor)
+      : undefined;
   return {
-    kind: checkoutViewKindFromPaymentStatus(row.paymentStatus),
+    amountDue,
+    amountDueMinor,
+    currency: "TRY",
+    beneficiaryName,
+    iban,
+    paymentReference,
+    bankName: typeof raw.bankName === "string" ? raw.bankName : undefined,
+    expiresAt: typeof raw.expiresAt === "string" ? raw.expiresAt : undefined,
+  };
+}
+
+function viewFromStatus(row: TervonaCheckoutStatusResponse): CheckoutResultView {
+  const bankTransfer = readBankTransfer(row);
+  let kind = checkoutViewKindFromPaymentStatus(row.paymentStatus);
+  if (bankTransfer && kind === "pending") {
+    kind = "awaiting_transfer";
+  }
+  return {
+    kind,
     orderId: row.orderId,
     orderNumber: row.orderNumber,
     amount: row.amount,
     currency: row.currency,
+    bankTransfer,
   };
 }
 

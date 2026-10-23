@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { CartClearOnPaid } from "@/components/checkout/CartClearOnPaid";
+import { HavalePendingPanel } from "@/components/checkout/HavalePendingPanel";
 import { loadCheckoutResult } from "@/lib/checkout/load-result";
 import { SITE_NAME, WHATSAPP_NUMBER } from "@/lib/constants";
 import { hasCustomerSessionCookie } from "@/lib/customer/session-cookie";
@@ -55,6 +56,11 @@ export default async function PaymentResultPage({
     body =
       "Siparişiniz için ödeme başarıyla alınamadı. Kartınızdan tahsilat yapılmış gibi görünmez; emin değilseniz bankanızla veya bizimle iletişime geçebilirsiniz.";
     accent = "border-red-200/80 bg-red-50/70";
+  } else if (kind === "awaiting_transfer") {
+    title = "Ödeme bekleniyor";
+    body =
+      "Havale / EFT ödemeniz henüz onaylanmadı. Aşağıdaki bilgilere göre transfer yapın; onay sonrası sipariş durumu güncellenir.";
+    accent = "border-amber-200/80 bg-amber-50/60";
   } else if (kind === "pending") {
     title = "Ödeme kontrol ediliyor";
     body =
@@ -67,9 +73,23 @@ export default async function PaymentResultPage({
     accent = "border-black/[0.08] bg-white/80";
   }
 
+  const showHavalePanel =
+    kind === "awaiting_transfer" &&
+    Boolean(result.orderNumber) &&
+    Boolean(result.bankTransfer);
+
   return (
     <article className="mx-auto w-full max-w-lg px-4 py-14 sm:px-6 sm:py-20">
-      <CartClearOnPaid orderId={result.orderId} paid={kind === "paid"} />
+      <CartClearOnPaid
+        orderId={result.orderId}
+        paid={kind === "paid" || kind === "awaiting_transfer"}
+      />
+      {showHavalePanel && result.orderNumber && result.bankTransfer ? (
+        <HavalePendingPanel
+          orderNumber={result.orderNumber}
+          instructions={result.bankTransfer}
+        />
+      ) : (
       <div className={`rounded-2xl border px-5 py-6 sm:px-6 sm:py-7 ${accent}`}>
         <p className="text-[0.65rem] font-semibold uppercase tracking-wider text-[var(--color-taupe-muted)]">
           Ödeme sonucu
@@ -89,6 +109,7 @@ export default async function PaymentResultPage({
           </p>
         ) : null}
       </div>
+      )}
 
       <div className="mt-8 flex flex-col gap-3">
         {kind === "failed" ? (

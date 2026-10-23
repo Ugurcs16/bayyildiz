@@ -256,6 +256,18 @@ export async function tervonaGetOrder(
   );
 }
 
+/** Bank details from Tervona only — never invent locally. */
+export type TervonaBankTransferPayload = {
+  beneficiaryName: string;
+  iban: string;
+  paymentReference: string;
+  amountDue: number;
+  amountDueMinor?: number;
+  currency: string;
+  bankName?: string;
+  expiresAt?: string;
+};
+
 export type TervonaCreateOrderResponse = {
   orderId: string;
   orderNumber: string;
@@ -263,6 +275,7 @@ export type TervonaCreateOrderResponse = {
   fulfillmentStatus: string;
   amount: number;
   currency: string;
+  bankTransfer?: TervonaBankTransferPayload;
 };
 
 export type TervonaInitializePaymentResponse = {
@@ -278,6 +291,7 @@ export type TervonaCheckoutStatusResponse = {
   fulfillmentStatus: string;
   amount: number;
   currency: string;
+  bankTransfer?: TervonaBankTransferPayload;
 };
 
 export async function tervonaCreateStorefrontOrder(input: {

@@ -1,4 +1,5 @@
 import { HeroSection } from "@/components/home/HeroSection";
+import { HavalePromoBanner } from "@/components/home/HavalePromoBanner";
 import { HomeCategoryStrip } from "@/components/home/HomeCategoryStrip";
 import { HomeCatalog } from "@/components/home/HomeCatalog";
 import {
@@ -53,6 +54,7 @@ export default async function HomePage() {
         }}
       />
       <HeroSection videoUrl="/hero-leonardo.mp4" />
+      <HavalePromoBanner />
       <HomeCategoryStrip />
       <HomeCatalog products={featured.products} catalogHref={catalogLink} />
       <section

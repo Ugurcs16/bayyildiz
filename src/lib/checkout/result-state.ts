@@ -1,4 +1,9 @@
-export type CheckoutViewKind = "paid" | "failed" | "pending" | "unknown";
+export type CheckoutViewKind =
+  | "paid"
+  | "failed"
+  | "pending"
+  | "awaiting_transfer"
+  | "unknown";
 
 export function checkoutViewKindFromPaymentStatus(
   paymentStatus: string | undefined,
@@ -6,6 +11,13 @@ export function checkoutViewKindFromPaymentStatus(
   const status = (paymentStatus ?? "").toLowerCase();
   if (status === "paid") return "paid";
   if (status === "failed" || status === "cancelled") return "failed";
+  if (
+    status === "awaiting_transfer" ||
+    status === "awaiting_bank_transfer" ||
+    status === "bank_transfer_pending"
+  ) {
+    return "awaiting_transfer";
+  }
   if (status === "pending" || status === "processing") return "pending";
   return "unknown";
 }
@@ -16,7 +28,8 @@ export function ignoreQueryPayment(value?: string | null): void {
 }
 
 export function shouldClearCart(kind: CheckoutViewKind): boolean {
-  return kind === "paid";
+  // Card: clear when paid. Havale: clear once awaiting_transfer (stock held).
+  return kind === "paid" || kind === "awaiting_transfer";
 }
 
 export function sanitizeOrderLookup(value: string | string[] | undefined): string | null {

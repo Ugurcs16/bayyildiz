@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { PaymentMethodSelector } from "@/components/checkout/PaymentMethodSelector";
 import { useCart } from "@/components/providers/cart-context";
 import type { CartLine } from "@/components/providers/cart-context";
 import type { CartValidationIssue } from "@/lib/cart-revalidate";
@@ -9,10 +10,17 @@ import {
   clientCartFingerprint,
   readOrCreateCheckoutAttemptKey,
 } from "@/lib/checkout/client-idempotency";
+import { isHavaleEftEnabledClient } from "@/lib/checkout/features";
+import { previewHavaleDiscount } from "@/lib/checkout/havale-discount";
 import {
   isValidIdentityNumber,
   normalizeIdentityNumber,
 } from "@/lib/checkout/identity-number";
+import { formatTryFromKurus } from "@/lib/checkout/money";
+import {
+  defaultCheckoutPaymentMethod,
+  type CheckoutPaymentMethod,
+} from "@/lib/checkout/payment-method";
 import { SITE_NAME } from "@/lib/constants";
 import {
   publicCartLineLabel,
@@ -37,6 +45,9 @@ type PlaceResponse = {
   status?: string;
   paymentPageUrl?: string;
   orderNumber?: string;
+  orderId?: string;
+  amount?: number;
+  currency?: string;
   items?: CartLine[];
   issues?: CartValidationIssue[];
 };
@@ -55,7 +66,12 @@ export function CheckoutForm() {
   const [error, setError] = useState<string | null>(null);
   const [issues, setIssues] = useState<CartValidationIssue[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<CheckoutPaymentMethod>(
+    defaultCheckoutPaymentMethod,
+  );
   const lock = useRef(false);
+  const havaleUiEnabled = isHavaleEftEnabledClient();
+  const havalePreview = previewHavaleDiscount(items);
 
   useEffect(() => {
     let cancelled = false;
@@ -137,10 +153,16 @@ export function CheckoutForm() {
       clientCartFingerprint(items),
     );
 
+    const effectiveMethod =
+      havaleUiEnabled && paymentMethod === "bank_transfer"
+        ? "bank_transfer"
+        : "card";
+
     const payload = {
       items,
       identityNumber: tckn,
       checkoutAttemptKey,
+      paymentMethod: effectiveMethod,
       customer: {
         email,
         firstName: firstName.trim(),
@@ -187,7 +209,7 @@ export function CheckoutForm() {
         return;
       }
 
-      if (body.status === "paid") {
+      if (body.status === "paid" || body.status === "awaiting_transfer") {
         const order = body.orderNumber
           ? `?order=${encodeURIComponent(body.orderNumber)}`
           : "";
@@ -294,13 +316,46 @@ export function CheckoutForm() {
                   </li>
                 ))}
               </ul>
-              <div className="mt-5 flex items-center justify-between border-t border-black/10 pt-4">
-                <span className="text-sm font-medium text-[var(--color-anthracite-soft)]">
-                  Toplam ({totalQuantity} ürün)
-                </span>
-                <span className="text-lg font-semibold tabular-nums text-[var(--color-espresso)]">
-                  {formatTry(String(subtotal))}
-                </span>
+              <div className="mt-5 space-y-2 border-t border-black/10 pt-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-[var(--color-anthracite-soft)]">
+                    Ara toplam ({totalQuantity} ürün)
+                  </span>
+                  <span className="text-sm font-semibold tabular-nums text-[var(--color-espresso)]">
+                    {formatTry(String(subtotal))}
+                  </span>
+                </div>
+                {havaleUiEnabled && paymentMethod === "bank_transfer" ? (
+                  <>
+                    <div className="flex items-center justify-between text-sm text-emerald-900">
+                      <span>Havale / EFT indirimi (%5)</span>
+                      <span className="font-semibold tabular-nums">
+                        −{formatTryFromKurus(havalePreview.discountKurus)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between pt-1">
+                      <span className="text-sm font-semibold text-[var(--color-espresso)]">
+                        Ödenecek (önizleme)
+                      </span>
+                      <span className="text-lg font-semibold tabular-nums text-[var(--color-espresso)]">
+                        {formatTryFromKurus(havalePreview.payableMerchandiseKurus)}
+                      </span>
+                    </div>
+                    <p className="text-xs text-[var(--color-taupe-muted)]">
+                      %5 indirim yalnızca ürün tutarına uygulanır (önizleme).
+                      Kesin tutar Tervona sipariş yanıtından gelir.
+                    </p>
+                  </>
+                ) : (
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-sm font-medium text-[var(--color-anthracite-soft)]">
+                      Toplam
+                    </span>
+                    <span className="text-lg font-semibold tabular-nums text-[var(--color-espresso)]">
+                      {formatTry(String(subtotal))}
+                    </span>
+                  </div>
+                )}
               </div>
               <p className="mt-3 text-xs text-[var(--color-taupe-muted)]">
                 Gösterilen tutar sepet özetidir. Tahsilat Tervona sipariş
@@ -309,6 +364,14 @@ export function CheckoutForm() {
             </div>
 
             <form className="space-y-6" onSubmit={onSubmit}>
+              {havaleUiEnabled ? (
+                <PaymentMethodSelector
+                  value={paymentMethod}
+                  onChange={setPaymentMethod}
+                  disabled={submitting}
+                />
+              ) : null}
+
               <div className="border-b border-black/[0.06] pb-2">
                 <h2 className="text-sm font-semibold uppercase tracking-widest text-[var(--color-taupe-muted)]">
                   İletişim
@@ -487,7 +550,13 @@ export function CheckoutForm() {
                   disabled={submitting}
                   className="inline-flex min-h-[3.25rem] flex-1 items-center justify-center rounded-full bg-[var(--color-espresso)] px-8 text-sm font-semibold text-white shadow-[0_12px_36px_-14px_rgba(0,0,0,0.4)] transition hover:bg-[var(--color-espresso-hover)] disabled:cursor-not-allowed disabled:opacity-60 sm:max-w-xs"
                 >
-                  {submitting ? "Ödeme sayfasına yönlendiriliyorsunuz…" : "Ödemeye geç"}
+                  {submitting
+                    ? havaleUiEnabled && paymentMethod === "bank_transfer"
+                      ? "Sipariş oluşturuluyor…"
+                      : "Ödeme sayfasına yönlendiriliyorsunuz…"
+                    : havaleUiEnabled && paymentMethod === "bank_transfer"
+                      ? "Havale ile devam et"
+                      : "Ödemeye geç"}
                 </button>
               </div>
             </form>
