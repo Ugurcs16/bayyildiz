@@ -1,7 +1,9 @@
 import { CopyFieldButton } from "@/components/checkout/CopyFieldButton";
 import { formatTryFromKurus, tryAmountToKurus } from "@/lib/checkout/money";
-import { SITE_NAME } from "@/lib/constants";
 import type { TervonaBankTransferInstructions } from "@/lib/tervona/havale-types";
+
+/** Fixed transfer description shown to customers — not the order number. */
+export const HAVALE_TRANSFER_DESCRIPTION = "Ayakkabı ücret bedeli";
 
 export type HavalePendingPanelProps = {
   orderNumber: string;
@@ -36,7 +38,6 @@ export function HavalePendingPanel({
   const amount = amountLabel(instructions);
   const iban = (instructions.iban ?? "").trim();
   const beneficiary = (instructions.beneficiaryName ?? "").trim();
-  const reference = (instructions.paymentReference ?? orderNumber).trim();
   const expiresLabel = formatExpiry(instructions.expiresAt);
 
   return (
@@ -48,13 +49,13 @@ export function HavalePendingPanel({
         Havale / EFT bilgileri
       </h1>
       <p className="mt-4 text-sm leading-relaxed text-[var(--color-anthracite-soft)] sm:text-base">
-        Siparişiniz oluşturuldu. Aşağıdaki indirimli tutarı belirtilen hesaba
-        aktarın. Havale açıklamasına{" "}
+        Siparişiniz oluşturuldu. Ödemenizi aşağıdaki banka bilgileriyle
+        gerçekleştirebilirsiniz. Havale açıklaması olarak{" "}
         <span className="font-semibold text-[var(--color-espresso)]">
-          sipariş numaranızı
+          &ldquo;{HAVALE_TRANSFER_DESCRIPTION}&rdquo;
         </span>{" "}
-        yazın. Ödeme banka hesabında doğrulandıktan sonra siparişiniz
-        hazırlanmaya başlar.
+        bilgisini kullanabilirsiniz. Ödemeniz banka hesabında doğrulandıktan
+        sonra siparişiniz hazırlanmaya başlar.
       </p>
 
       <dl className="mt-6 space-y-4 text-sm">
@@ -99,6 +100,9 @@ export function HavalePendingPanel({
             <dd className="mt-1 break-all font-mono text-[0.9rem] font-semibold tracking-wide text-[var(--color-espresso)]">
               {iban || "—"}
             </dd>
+            <p className="mt-1.5 text-xs leading-relaxed text-[var(--color-taupe-muted)]">
+              IBAN&apos;ı kolayca kopyalayabilirsiniz.
+            </p>
           </div>
           <CopyFieldButton value={iban} />
         </div>
@@ -109,30 +113,28 @@ export function HavalePendingPanel({
               Havale açıklaması
             </dt>
             <dd className="mt-1 font-semibold text-[var(--color-espresso)]">
-              {reference || "—"}
+              {HAVALE_TRANSFER_DESCRIPTION}
             </dd>
             <p className="mt-1.5 text-xs leading-relaxed text-[var(--color-taupe-muted)]">
-              Banka transferinin açıklama / referans alanına yalnızca bu sipariş
-              numarasını yazın.
+              Havale açıklaması olarak &ldquo;{HAVALE_TRANSFER_DESCRIPTION}&rdquo;
+              bilgisini kullanabilirsiniz.
             </p>
           </div>
-          <CopyFieldButton value={reference} />
+          <CopyFieldButton value={HAVALE_TRANSFER_DESCRIPTION} />
         </div>
       </dl>
 
       {expiresLabel ? (
         <p className="mt-5 rounded-xl border border-amber-200/90 bg-white/70 px-3 py-2 text-xs leading-relaxed text-[var(--color-anthracite)]">
           Ödeme süresi: <span className="font-semibold">{expiresLabel}</span>{" "}
-          tarihine kadar. Süre dolarsa sipariş iptal olabilir; yeniden sipariş
-          vermeniz gerekir.
+          tarihine kadar geçerlidir. Süre dolarsa sipariş iptal edilebilir;
+          dilerseniz yeniden sipariş verebilirsiniz.
         </p>
       ) : null}
 
       <p className="mt-4 text-xs leading-relaxed text-[var(--color-taupe-muted)]">
-        {SITE_NAME} şahıs işletmesidir; banka hesap sahibi Fırat Coşkun’dur.
-        BTSO (Bursa Ticaret ve Sanayi Odası) üyelik bilgisidir — banka alıcı adı
-        veya resmi unvanın parçası değildir. IBAN ve alıcı adı yalnızca güvenli
-        sipariş kaydından gösterilir.
+        Fırat Coşkun, Bayyıldız Ayakkabı olarak Bursa Ticaret ve Sanayi Odası
+        üyesidir.
       </p>
 
       {instructions.bankName ? (

@@ -45,7 +45,13 @@ export type CustomerOrderSummary = {
   createdAt: string;
   total: number;
   currency: string;
+  /** Short/list badge — same copy as statusDescription for consistency. */
   status: string;
+  /** Detail paragraph — identical to status (Tervona-derived, no local invent). */
+  statusDescription: string;
+  orderStatus: string;
+  paymentStatus: string;
+  fulfillmentStatus: string;
   lines: CustomerOrderLine[];
 };
 

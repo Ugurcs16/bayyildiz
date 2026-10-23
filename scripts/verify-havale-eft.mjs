@@ -136,8 +136,21 @@ function testSourceIntegration() {
   assert(!/TR\d{2}\d{4}/.test(panel.replace(/\s/g, "")), "no hardcoded IBAN");
   assert(panel.includes("instructions.iban"), "iban from API");
   assert(panel.includes("CopyFieldButton"), "copy buttons");
-  assert(panel.includes("Fırat Coşkun"), "account holder clarification");
-  assert(panel.includes("BTSO"), "BTSO is membership not title");
+  assert(panel.includes("Ayakkabı ücret bedeli"), "fixed transfer description");
+  assert(
+    panel.includes("HAVALE_TRANSFER_DESCRIPTION"),
+    "description constant used for copy",
+  );
+  assert(
+    !panel.includes("instructions.paymentReference"),
+    "order ref not shown as transfer description",
+  );
+  assert(panel.includes("Fırat Coşkun"), "BTSO membership note");
+  assert(
+    panel.includes("Bursa Ticaret ve Sanayi Odası"),
+    "short chamber membership copy",
+  );
+  assert(!panel.includes("şahıs işletmesidir"), "long BTSO paragraph removed");
   assert(panel.includes("expiresAt") || panel.includes("expiresLabel"), "expiry");
 
   const banner = readFileSync(
@@ -146,6 +159,9 @@ function testSourceIntegration() {
   );
   assert(banner.includes("isHavaleEftEnabledClient"), "banner gated");
   assert(banner.includes("%5 İndirim"), "promo copy");
+  assert(!banner.includes("href="), "promo has no CTA link");
+  assert(!banner.includes("Sepete"), "no sepete git CTA");
+  assert(!banner.includes("Ödeme sayfasında"), "no checkout CTA");
 
   const home = readFileSync("src/app/page.tsx", "utf8");
   assert(home.includes("HavalePromoBanner"), "banner on home");

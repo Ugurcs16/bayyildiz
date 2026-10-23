@@ -9,6 +9,7 @@
     "lint": "eslint",
     "test:checkout": "npx --yes tsx scripts/verify-checkout.ts",
     "test:havale": "node scripts/verify-havale-eft.mjs",
+    "test:order-status": "npx --yes tsx scripts/verify-order-status.ts",
     "test:consent": "npx --yes tsx scripts/verify-consent.ts",
     "test:images": "npx --yes tsx scripts/verify-product-images.ts",
     "typecheck": "tsc --noEmit"

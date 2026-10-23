@@ -59,7 +59,7 @@ export default async function PaymentResultPage({
   } else if (kind === "awaiting_transfer") {
     title = "Ödeme bekleniyor";
     body =
-      "Havale / EFT ödemeniz henüz onaylanmadı. Aşağıdaki bilgilere göre transfer yapın; onay sonrası sipariş durumu güncellenir.";
+      "Havale / EFT ödemeniz henüz onaylanmadı. Ödemenizi aşağıdaki banka bilgileriyle gerçekleştirebilirsiniz; onay sonrası sipariş durumu güncellenir.";
     accent = "border-amber-200/80 bg-amber-50/60";
   } else if (kind === "pending") {
     title = "Ödeme kontrol ediliyor";

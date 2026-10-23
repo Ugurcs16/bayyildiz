@@ -7,6 +7,8 @@ import { readCustomerSessionToken } from "@/lib/customer/session-cookie";
 import { formatTry } from "@/lib/woocommerce";
 import { tervonaListOrders } from "@/lib/tervona/customer-client";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Siparişlerim",
   description: `${SITE_NAME} sipariş geçmişi.`,
@@ -62,7 +64,9 @@ export default async function OrdersPage() {
               </p>
               <p className="mt-1 text-sm text-[var(--color-anthracite-soft)]">
                 {formatDate(order.createdAt)}
-                {order.status ? ` · ${order.status}` : ""}
+              </p>
+              <p className="mt-2 inline-flex max-w-full rounded-md bg-black/[0.04] px-2.5 py-1.5 text-sm font-medium text-[var(--color-espresso)]">
+                {order.status}
               </p>
               <p className="mt-2 text-base font-semibold tabular-nums text-[var(--color-espresso)]">
                 {formatTry(String(order.total))}
@@ -75,6 +79,12 @@ export default async function OrdersPage() {
                   </li>
                 ))}
               </ul>
+              <Link
+                href={`/hesabim/siparisler/${encodeURIComponent(order.id)}`}
+                className="mt-4 inline-flex text-sm font-semibold text-[var(--color-espresso)] underline-offset-2 hover:underline"
+              >
+                Sipariş detayı
+              </Link>
             </li>
           ))}
         </ul>

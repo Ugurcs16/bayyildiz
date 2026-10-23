@@ -4,6 +4,7 @@ import type {
   CustomerOrderLine,
   CustomerProfile,
 } from "./types";
+import { customerOrderStatusMessage } from "@/lib/customer/order-status";
 import { publicProductCode, stripSupplierBrandLabel } from "@/lib/public-product-identity";
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -73,30 +74,31 @@ function mapOrderLine(value: unknown): CustomerOrderLine | null {
   };
 }
 
-function statusLabel(orderStatus: string, fulfillmentStatus: string): string {
-  const raw = (fulfillmentStatus || orderStatus).toLowerCase();
-  if (raw.includes("cancel")) return "İptal";
-  if (raw.includes("fulfill") || raw.includes("deliver")) return "Teslim edildi";
-  if (raw.includes("ship")) return "Kargoda";
-  if (raw.includes("prepar") || raw.includes("process") || raw.includes("pending")) {
-    return "Hazırlanıyor";
-  }
-  return orderStatus || fulfillmentStatus || "Sipariş alındı";
-}
-
 export function mapCustomerOrder(value: unknown): CustomerOrderDetail | null {
   const row = asRecord(value);
   if (!row || !str(row.id)) return null;
   const lines = Array.isArray(row.lines)
     ? row.lines.map(mapOrderLine).filter((line): line is CustomerOrderLine => Boolean(line))
     : [];
+  const orderStatus = str(row.orderStatus);
+  const paymentStatus = str(row.paymentStatus);
+  const fulfillmentStatus = str(row.fulfillmentStatus);
+  const status = customerOrderStatusMessage({
+    orderStatus,
+    paymentStatus,
+    fulfillmentStatus,
+  });
   return {
     id: str(row.id),
     reference: str(row.orderNumber) || str(row.reference) || str(row.id),
     createdAt: str(row.createdAt),
     total: num(row.grandTotal) || num(row.total),
     currency: str(row.currency) || "TRY",
-    status: statusLabel(str(row.orderStatus), str(row.fulfillmentStatus)),
+    status,
+    statusDescription: status,
+    orderStatus,
+    paymentStatus,
+    fulfillmentStatus,
     lines,
   };
 }
