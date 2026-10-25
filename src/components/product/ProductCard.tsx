@@ -73,7 +73,7 @@ export function ProductCard({ product, imagePriority = false }: Props) {
         </p>
 
         <div className="mt-2.5 flex flex-wrap items-baseline gap-2 border-t border-black/[0.06] pt-2.5">
-          <span className="font-product-meta text-xl font-semibold text-[var(--color-espresso)]">
+          <span className="font-product-meta whitespace-nowrap text-[28px] font-bold leading-none text-[var(--color-espresso)] sm:text-xl sm:font-semibold sm:leading-7">
             {formatPrice(product.price)}
           </span>
           {product.oldPrice ? (
