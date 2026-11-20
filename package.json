@@ -12,6 +12,7 @@
     "test:order-status": "npx --yes tsx scripts/verify-order-status.ts",
     "test:consent": "npx --yes tsx scripts/verify-consent.ts",
     "test:images": "npx --yes tsx scripts/verify-product-images.ts",
+    "test:gsc-redirects": "npx --yes tsx scripts/verify-gsc-redirects-pkg1.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

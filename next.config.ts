@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { GSC_LEGACY_REDIRECTS_PKG1 } from "./src/lib/gsc-legacy-redirects-pkg1";
 
 const nextConfig: NextConfig = {
   images: {
@@ -31,6 +32,11 @@ const nextConfig: NextConfig = {
         destination: "/kategori/sneaker",
         permanent: true,
       },
+      ...GSC_LEGACY_REDIRECTS_PKG1.map((rule) => ({
+        source: rule.source,
+        destination: rule.destination,
+        permanent: rule.permanent,
+      })),
     ];
   },
 };
