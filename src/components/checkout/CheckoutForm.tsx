@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { CouponCodeField } from "@/components/checkout/CouponCodeField";
 import { PaymentMethodSelector } from "@/components/checkout/PaymentMethodSelector";
 import { useCart } from "@/components/providers/cart-context";
 import type { CartLine } from "@/components/providers/cart-context";
@@ -10,13 +11,15 @@ import {
   clientCartFingerprint,
   readOrCreateCheckoutAttemptKey,
 } from "@/lib/checkout/client-idempotency";
+import type { DiscountPreviewSuccess } from "@/lib/checkout/coupon";
+import { normalizeCouponCode } from "@/lib/checkout/coupon";
 import { isHavaleEftEnabledClient } from "@/lib/checkout/features";
 import { previewHavaleDiscount } from "@/lib/checkout/havale-discount";
 import {
   isValidIdentityNumber,
   normalizeIdentityNumber,
 } from "@/lib/checkout/identity-number";
-import { formatTryFromKurus } from "@/lib/checkout/money";
+import { formatTryFromKurus, tryAmountToKurus } from "@/lib/checkout/money";
 import {
   defaultCheckoutPaymentMethod,
   type CheckoutPaymentMethod,
@@ -69,9 +72,35 @@ export function CheckoutForm() {
   const [paymentMethod, setPaymentMethod] = useState<CheckoutPaymentMethod>(
     defaultCheckoutPaymentMethod,
   );
+  const [couponInput, setCouponInput] = useState("");
+  const [appliedCoupon, setAppliedCoupon] =
+    useState<DiscountPreviewSuccess | null>(null);
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [couponApplying, setCouponApplying] = useState(false);
   const lock = useRef(false);
+  const couponRequestId = useRef(0);
   const havaleUiEnabled = isHavaleEftEnabledClient();
   const havalePreview = previewHavaleDiscount(items);
+  const effectiveMethod: CheckoutPaymentMethod =
+    havaleUiEnabled && paymentMethod === "bank_transfer"
+      ? "bank_transfer"
+      : "card";
+
+  function clearAppliedCoupon(message?: string | null) {
+    couponRequestId.current += 1;
+    setAppliedCoupon(null);
+    setCouponApplying(false);
+    setCouponError(message ?? null);
+  }
+
+  function handlePaymentMethodChange(method: CheckoutPaymentMethod) {
+    setPaymentMethod(method);
+    if (appliedCoupon) {
+      clearAppliedCoupon(
+        "Ödeme yöntemi değişti. İndirim kodunu yeniden uygulayın.",
+      );
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -131,7 +160,93 @@ export function CheckoutForm() {
     }
   }, []);
 
+  const cartLinesKey = items
+    .map((line) => `${line.productId}:${line.variationId}:${line.quantity}`)
+    .sort()
+    .join("|");
+
+  // Cart change invalidates any applied preview — never reuse stale totals.
+  useEffect(() => {
+    setAppliedCoupon((current) => {
+      if (!current) return current;
+      setCouponError("Sepet değişti. İndirim kodunu yeniden uygulayın.");
+      couponRequestId.current += 1;
+      setCouponApplying(false);
+      return null;
+    });
+  }, [cartLinesKey]);
+
   const empty = items.length === 0;
+
+  async function onApplyCoupon() {
+    if (couponApplying || submitting || empty) return;
+    const code = normalizeCouponCode(couponInput);
+    if (!code) {
+      setCouponError("Lütfen bir indirim kodu girin.");
+      return;
+    }
+
+    const requestId = ++couponRequestId.current;
+    setCouponApplying(true);
+    setCouponError(null);
+
+    try {
+      const response = await fetch("/api/checkout/discounts/preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: items.map((line) => ({
+            productId: line.productId,
+            variationId: line.variationId,
+            quantity: line.quantity,
+          })),
+          paymentMethod: effectiveMethod,
+          couponCode: code,
+        }),
+      });
+      const body = (await response.json().catch(() => ({}))) as Partial<
+        DiscountPreviewSuccess
+      > & { valid?: boolean; error?: string; code?: string };
+
+      if (requestId !== couponRequestId.current) return;
+
+      if (!response.ok || body.valid !== true) {
+        setAppliedCoupon(null);
+        setCouponError(
+          body.error ||
+            (response.status === 429
+              ? "Çok fazla deneme. Lütfen biraz sonra tekrar deneyin."
+              : "İndirim kodu geçersiz veya bu ödeme için uygun değil."),
+        );
+        return;
+      }
+
+      if (
+        typeof body.amount !== "number" ||
+        typeof body.subtotal !== "number" ||
+        typeof body.percent !== "number" ||
+        typeof body.code !== "string"
+      ) {
+        setAppliedCoupon(null);
+        setCouponError("İndirim önizlemesi alınamadı. Lütfen tekrar deneyin.");
+        return;
+      }
+
+      setAppliedCoupon(body as DiscountPreviewSuccess);
+      setCouponInput(normalizeCouponCode(body.code));
+      setCouponError(null);
+    } catch {
+      if (requestId !== couponRequestId.current) return;
+      setAppliedCoupon(null);
+      setCouponError(
+        "Bağlantı hatası. İndirim uygulanamadı; kuponsuz devam edebilir veya tekrar deneyebilirsiniz.",
+      );
+    } finally {
+      if (requestId === couponRequestId.current) {
+        setCouponApplying(false);
+      }
+    }
+  }
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -143,26 +258,46 @@ export function CheckoutForm() {
       return;
     }
 
+    if (couponInput.trim() && !appliedCoupon) {
+      setCouponError("İndirim kodunu uygulamadan ödemeye geçilemez.");
+      return;
+    }
+
+    if (
+      appliedCoupon &&
+      (appliedCoupon.paymentMethod !== effectiveMethod ||
+        normalizeCouponCode(appliedCoupon.code) !==
+          normalizeCouponCode(couponInput || appliedCoupon.code))
+    ) {
+      clearAppliedCoupon(
+        "İndirim kodunu yeniden uygulayın.",
+      );
+      return;
+    }
+
     checkoutPlaceInFlight = true;
     lock.current = true;
     setSubmitting(true);
     setError(null);
     setIssues([]);
 
-    const checkoutAttemptKey = readOrCreateCheckoutAttemptKey(
-      clientCartFingerprint(items),
-    );
+    const appliedCode = appliedCoupon?.code
+      ? normalizeCouponCode(appliedCoupon.code)
+      : undefined;
 
-    const effectiveMethod =
-      havaleUiEnabled && paymentMethod === "bank_transfer"
-        ? "bank_transfer"
-        : "card";
+    const checkoutAttemptKey = readOrCreateCheckoutAttemptKey(
+      clientCartFingerprint(items, {
+        paymentMethod: effectiveMethod,
+        couponCode: appliedCode,
+      }),
+    );
 
     const payload = {
       items,
       identityNumber: tckn,
       checkoutAttemptKey,
       paymentMethod: effectiveMethod,
+      ...(appliedCode ? { couponCode: appliedCode } : {}),
       customer: {
         email,
         firstName: firstName.trim(),
@@ -193,6 +328,24 @@ export function CheckoutForm() {
           );
           return;
         }
+        if (body.code === "IDEMPOTENCY_CONFLICT") {
+          setError(
+            body.error ||
+              "Bu sipariş denemesi farklı bir ödeme yöntemi veya indirim koduyla zaten kullanıldı. Sepeti yenileyip tekrar deneyin.",
+          );
+          return;
+        }
+        if (body.code === "COUPON_AMOUNT_MISMATCH") {
+          clearAppliedCoupon(
+            body.error ||
+              "İndirim tutarı değişti. Lütfen kodu yeniden uygulayın.",
+          );
+          setError(
+            body.error ||
+              "İndirim tutarı doğrulanamadı. Ödeme başlatılmadı.",
+          );
+          return;
+        }
         if (Array.isArray(body.items) && body.issues) {
           replaceItems(body.items);
         }
@@ -205,6 +358,14 @@ export function CheckoutForm() {
       }
 
       if (!response.ok) {
+        if (
+          body.code === "COUPON_INVALID" ||
+          body.code === "COUPON_NOT_APPLICABLE"
+        ) {
+          clearAppliedCoupon(
+            body.error || "İndirim kodu bu sipariş için geçerli değil.",
+          );
+        }
         setError(body.error || "Ödeme başlatılamadı. Lütfen tekrar deneyin.");
         return;
       }
@@ -319,13 +480,59 @@ export function CheckoutForm() {
               <div className="mt-5 space-y-2 border-t border-black/10 pt-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-[var(--color-anthracite-soft)]">
-                    Ara toplam ({totalQuantity} ürün)
+                    Ürünler toplamı ({totalQuantity} ürün)
                   </span>
                   <span className="text-sm font-semibold tabular-nums text-[var(--color-espresso)]">
-                    {formatTry(String(subtotal))}
+                    {appliedCoupon
+                      ? formatTry(String(appliedCoupon.subtotal))
+                      : formatTry(String(subtotal))}
                   </span>
                 </div>
-                {havaleUiEnabled && paymentMethod === "bank_transfer" ? (
+                {appliedCoupon ? (
+                  <>
+                    <div className="flex items-center justify-between text-sm text-emerald-900">
+                      <span>
+                        İndirim kodu ({appliedCoupon.code} · %
+                        {appliedCoupon.percent})
+                      </span>
+                      <span className="font-semibold tabular-nums">
+                        −
+                        {formatTryFromKurus(
+                          appliedCoupon.percentDiscountMinor,
+                        )}
+                      </span>
+                    </div>
+                    {appliedCoupon.roundingDiscountMinor > 0 ? (
+                      <div className="flex items-center justify-between text-sm text-emerald-900">
+                        <span>Size özel ek indirim</span>
+                        <span className="font-semibold tabular-nums">
+                          −
+                          {formatTryFromKurus(
+                            appliedCoupon.roundingDiscountMinor,
+                          )}
+                        </span>
+                      </div>
+                    ) : null}
+                    <div className="flex items-center justify-between text-sm text-[var(--color-anthracite-soft)]">
+                      <span>Kargo</span>
+                      <span className="font-medium">Ücretsiz</span>
+                    </div>
+                    <div className="flex items-center justify-between pt-1">
+                      <span className="text-sm font-semibold text-[var(--color-espresso)]">
+                        Ödenecek toplam
+                      </span>
+                      <span className="text-lg font-semibold tabular-nums text-[var(--color-espresso)]">
+                        {formatTryFromKurus(
+                          tryAmountToKurus(appliedCoupon.amount),
+                        )}
+                      </span>
+                    </div>
+                    <p className="text-xs text-[var(--color-taupe-muted)]">
+                      Tutar Tervona indirim önizlemesinden gelir. Siparişte
+                      doğrulanır.
+                    </p>
+                  </>
+                ) : havaleUiEnabled && paymentMethod === "bank_transfer" ? (
                   <>
                     {havalePreview.percentDiscountKurus > 0 ? (
                       <div className="flex items-center justify-between text-sm text-emerald-900">
@@ -392,10 +599,34 @@ export function CheckoutForm() {
               {havaleUiEnabled ? (
                 <PaymentMethodSelector
                   value={paymentMethod}
-                  onChange={setPaymentMethod}
-                  disabled={submitting}
+                  onChange={handlePaymentMethodChange}
+                  disabled={submitting || couponApplying}
                 />
               ) : null}
+
+              <CouponCodeField
+                inputValue={couponInput}
+                onInputChange={(value) => {
+                  setCouponInput(value);
+                  if (couponError) setCouponError(null);
+                }}
+                appliedCode={appliedCoupon?.code ?? null}
+                applying={couponApplying}
+                disabled={submitting}
+                error={couponError}
+                successMessage={
+                  appliedCoupon
+                    ? `%${appliedCoupon.percent} indirim uygulandı.`
+                    : null
+                }
+                onApply={() => {
+                  void onApplyCoupon();
+                }}
+                onRemove={() => {
+                  clearAppliedCoupon(null);
+                  setCouponInput("");
+                }}
+              />
 
               <div className="border-b border-black/[0.06] pb-2">
                 <h2 className="text-sm font-semibold uppercase tracking-widest text-[var(--color-taupe-muted)]">

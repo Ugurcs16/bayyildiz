@@ -22,6 +22,7 @@ import {
   applyIdempotencyCookie,
   mintIdempotencyKey,
 } from "@/lib/checkout/cookies";
+import { previewMatchesOrderAmount } from "@/lib/checkout/coupon";
 import { isAllowedIyzicoCheckoutUrl } from "@/lib/checkout/iyzico-url";
 import type { CheckoutPlaceInput } from "@/lib/checkout/parse";
 
@@ -90,10 +91,26 @@ export function checkoutErrorResponse(error: unknown): NextResponse {
       return bffJson(
         {
           error:
-            "Bu sipariş denemesi farklı bir ödeme yöntemiyle zaten kullanıldı. Sepeti yenileyip tekrar deneyin.",
+            "Bu sipariş denemesi farklı bir ödeme yöntemi veya indirim koduyla zaten kullanıldı. Sepeti yenileyip tekrar deneyin.",
           code: "IDEMPOTENCY_CONFLICT",
         },
         409,
+      );
+    }
+    if (
+      error.status === 400 &&
+      (error.code === "COUPON_INVALID" ||
+        error.code === "COUPON_NOT_APPLICABLE" ||
+        (error.remoteMessage ?? "").toLowerCase().includes("coupon"))
+    ) {
+      return bffJson(
+        {
+          error:
+            error.remoteMessage?.trim() ||
+            "İndirim kodu bu sipariş için geçerli değil.",
+          code: error.code ?? "COUPON_INVALID",
+        },
+        400,
       );
     }
     return bffJson(
@@ -110,6 +127,8 @@ export type CreatedCheckoutOrder = {
   paymentStatus: string;
   amount: number;
   currency: string;
+  /** Authoritative lines sent to Tervona (post stock revalidation). */
+  orderItems: { productId: string; variantId: string; quantity: number }[];
   access: CheckoutAccessCookie;
   idempotency: CheckoutIdempotencyCookie;
 };
@@ -158,7 +177,12 @@ export async function createStorefrontOrderForCheckout(input: {
     }
   }
 
-  const fingerprint = cartFingerprint(orderItems);
+  const paymentMethod = input.parsed.paymentMethod ?? "card";
+  const couponCode = input.parsed.couponCode;
+  const fingerprint = cartFingerprint(orderItems, {
+    paymentMethod,
+    couponCode,
+  });
   const idempotency = resolveCheckoutIdempotencyKey({
     fingerprint,
     cookie: parseIdempotencyCookie(input.idempotencyRaw),
@@ -166,7 +190,6 @@ export async function createStorefrontOrderForCheckout(input: {
     mint: mintIdempotencyKey,
   });
 
-  const paymentMethod = input.parsed.paymentMethod ?? "card";
   const created = await tervonaCreateStorefrontOrder({
     payload: {
       items: orderItems,
@@ -175,6 +198,7 @@ export async function createStorefrontOrderForCheckout(input: {
       ...(paymentMethod === "bank_transfer"
         ? { paymentMethod: "bank_transfer" }
         : {}),
+      ...(couponCode ? { couponCode } : {}),
     },
     idempotencyKey: idempotency.key,
     sessionToken: input.sessionToken,
@@ -192,6 +216,7 @@ export async function createStorefrontOrderForCheckout(input: {
     paymentStatus: created.paymentStatus || "pending",
     amount: typeof created.amount === "number" ? created.amount : 0,
     currency: created.currency || "TRY",
+    orderItems,
     access: {
       orderId: created.orderId,
       orderNumber: created.orderNumber,
@@ -199,6 +224,37 @@ export async function createStorefrontOrderForCheckout(input: {
     },
     idempotency,
   };
+}
+
+/**
+ * When a coupon was used, refuse to send the shopper into payment unless a
+ * fresh Tervona preview amount matches the authoritative order amount.
+ * Keeps checkout cookies so the created order remains safely reachable.
+ */
+export function rejectCouponAmountMismatch(input: {
+  created: CreatedCheckoutOrder;
+  previewAmountTl: number | null | undefined;
+}): NextResponse | null {
+  const previewOk =
+    input.previewAmountTl !== null &&
+    input.previewAmountTl !== undefined &&
+    Number.isFinite(input.previewAmountTl) &&
+    previewMatchesOrderAmount(input.previewAmountTl, input.created.amount);
+  if (previewOk) {
+    return null;
+  }
+  return bffJson(
+    {
+      error:
+        "İndirim tutarı doğrulanamadı. Lütfen indirim kodunu yeniden uygulayıp tekrar deneyin.",
+      code: "COUPON_AMOUNT_MISMATCH",
+      orderId: input.created.orderId,
+      orderNumber: input.created.orderNumber,
+      amount: input.created.amount,
+      currency: input.created.currency,
+    },
+    409,
+  );
 }
 
 export async function initializePaymentForCheckout(input: {

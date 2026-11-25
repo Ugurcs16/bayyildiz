@@ -7,6 +7,7 @@ const LIMIT = {
   initializePayment: 20,
   place: 20,
   result: 60,
+  discountPreview: 40,
 } as const;
 
 const WINDOW_MS = 15 * 60 * 1000;

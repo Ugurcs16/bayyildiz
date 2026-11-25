@@ -2,6 +2,7 @@ import { bffJson, rejectCrossOrigin } from "@/lib/customer/bff";
 import { CUSTOMER_MESSAGES } from "@/lib/customer/messages";
 import { trustedClientIp } from "@/lib/customer/request-guard";
 import { readCustomerSessionToken } from "@/lib/customer/session-cookie";
+import { parseDiscountPreviewBody } from "@/lib/checkout/coupon";
 import { readIdempotencyCookie } from "@/lib/checkout/cookies";
 import { isHavaleEftEnabledServer } from "@/lib/checkout/features";
 import { parseCheckoutPlaceBody, readCheckoutJson } from "@/lib/checkout/parse";
@@ -10,12 +11,14 @@ import {
   checkoutErrorResponse,
   createStorefrontOrderForCheckout,
   initializePaymentForCheckout,
+  rejectCouponAmountMismatch,
   type CreatedCheckoutOrder,
 } from "@/lib/checkout/place";
 import {
   checkoutClientIp,
   consumeCheckoutRateLimit,
 } from "@/lib/checkout/rate-limit";
+import { tervonaPreviewCheckoutDiscount } from "@/lib/tervona/customer-client";
 
 export const dynamic = "force-dynamic";
 
@@ -43,6 +46,39 @@ export async function POST(request: Request) {
 
   let created: CreatedCheckoutOrder | undefined;
   try {
+    // Coupon: preview on the server before create (avoids single-use consume races).
+    let couponPreviewAmountTl: number | null = null;
+    if (parsed.couponCode) {
+      try {
+        const remote = await tervonaPreviewCheckoutDiscount({
+          payload: {
+            items: parsed.orderItems,
+            paymentMethod: parsed.paymentMethod,
+            couponCode: parsed.couponCode,
+          },
+          sessionToken: await readCustomerSessionToken(),
+          clientIp: trustedClientIp(request),
+        });
+        const preview = parseDiscountPreviewBody(remote);
+        if (!preview || !preview.valid) {
+          return bffJson(
+            {
+              valid: false,
+              error:
+                preview && !preview.valid
+                  ? preview.error
+                  : "İndirim kodu doğrulanamadı.",
+              code: "COUPON_INVALID",
+            },
+            400,
+          );
+        }
+        couponPreviewAmountTl = preview.amount;
+      } catch (error) {
+        return checkoutErrorResponse(error);
+      }
+    }
+
     const existing = await readIdempotencyCookie();
     const order = await createStorefrontOrderForCheckout({
       parsed,
@@ -54,6 +90,16 @@ export async function POST(request: Request) {
     });
     if (order instanceof Response) return order;
     created = order;
+
+    if (parsed.couponCode) {
+      const mismatch = rejectCouponAmountMismatch({
+        created,
+        previewAmountTl: couponPreviewAmountTl,
+      });
+      if (mismatch) {
+        return attachCheckoutCookies(mismatch, created);
+      }
+    }
 
     // Havale/EFT: never call iyzico — Tervona already set awaiting_transfer.
     if (parsed.paymentMethod === "bank_transfer") {

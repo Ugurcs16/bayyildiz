@@ -99,10 +99,18 @@ export function parseIdempotencyCookie(
 
 export function cartFingerprint(
   items: { productId: string; variantId: string; quantity: number }[],
+  meta?: {
+    paymentMethod?: string | null;
+    couponCode?: string | null;
+  },
 ): string {
-  const normalized = items
+  const lines = items
     .map((item) => `${item.productId}:${item.variantId}:${item.quantity}`)
     .sort()
     .join("|");
+  const pm =
+    meta?.paymentMethod === "bank_transfer" ? "bank_transfer" : "card";
+  const coupon = (meta?.couponCode ?? "").trim().toUpperCase().slice(0, 40);
+  const normalized = `${lines}|pm:${pm}|coupon:${coupon}`;
   return createHash("sha256").update(normalized).digest("hex").slice(0, 32);
 }

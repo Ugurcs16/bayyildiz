@@ -3,15 +3,26 @@
  * even before Set-Cookie from the first response lands.
  */
 
+import { checkoutAttemptFingerprintParts } from "@/lib/checkout/coupon";
+import type { CheckoutPaymentMethod } from "@/lib/checkout/payment-method";
+
 const STORAGE_KEY = "bayyildiz_checkout_attempt_v1";
 
 export function clientCartFingerprint(
   items: { productId: string; variationId: string; quantity: number }[],
+  meta?: {
+    paymentMethod?: CheckoutPaymentMethod | string;
+    couponCode?: string | null;
+  },
 ): string {
-  return items
-    .map((item) => `${item.productId}:${item.variationId}:${item.quantity}`)
-    .sort()
-    .join("|");
+  const itemLines = items.map(
+    (item) => `${item.productId}:${item.variationId}:${item.quantity}`,
+  );
+  return checkoutAttemptFingerprintParts({
+    itemLines,
+    paymentMethod: meta?.paymentMethod ?? "card",
+    couponCode: meta?.couponCode,
+  });
 }
 
 function mintClientKey(): string {

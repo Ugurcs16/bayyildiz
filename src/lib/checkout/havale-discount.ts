@@ -47,9 +47,9 @@ export function bankTransferRoundingDiscountMinor(
 /**
  * Preview-only: 5% off cart merchandise, then floor to 50 TL.
  *
- * Current Bayyıldız checkout has no shipping fee line and no coupon field.
- * Discount is applied only to product line totals (price × qty).
- * Authoritative totals always come from Tervona amountDueMinor.
+ * Kuponsuz havale önizlemesi: shipping fee yok; ürün satır toplamı (price × qty).
+ * Kupon uygulandığında CheckoutForm Tervona preview tutarlarını gösterir.
+ * Authoritative totals always come from Tervona amountDueMinor / order.amount.
  */
 export function previewHavaleDiscount(
   lines: readonly HavaleDiscountLine[],

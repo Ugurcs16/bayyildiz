@@ -1,6 +1,7 @@
 import { bffError, bffJson } from "@/lib/customer/bff";
 import { CUSTOMER_MESSAGES } from "@/lib/customer/messages";
 import type { CartLine } from "@/components/providers/cart-context";
+import { parseCouponCodeInput } from "@/lib/checkout/coupon";
 import { parseIdentityNumber } from "@/lib/checkout/identity-number";
 import {
   defaultCheckoutPaymentMethod,
@@ -86,6 +87,11 @@ export type CheckoutPlaceInput = {
   checkoutAttemptKey?: string;
   /** Defaults to card. bank_transfer rejected unless feature flag is on. */
   paymentMethod: CheckoutPaymentMethod;
+  /**
+   * Optional verified coupon code (normalized). Omitted when unused.
+   * Never accept client-calculated discount amounts.
+   */
+  couponCode?: string;
 };
 
 export function parseCheckoutPlaceBody(
@@ -96,7 +102,11 @@ export function parseCheckoutPlaceBody(
     body.grandTotal !== undefined ||
     body.currency !== undefined ||
     body.paymentStatus !== undefined ||
-    body.status !== undefined
+    body.status !== undefined ||
+    body.discount !== undefined ||
+    body.couponPercent !== undefined ||
+    body.percentDiscount !== undefined ||
+    body.totalDiscount !== undefined
   ) {
     return bffJson({ error: CUSTOMER_MESSAGES.invalidInput }, 400);
   }
@@ -172,6 +182,22 @@ export function parseCheckoutPlaceBody(
     paymentMethod = parsedMethod;
   }
 
+  let couponCode: string | undefined;
+  if (
+    body.couponCode !== undefined &&
+    body.couponCode !== null &&
+    body.couponCode !== ""
+  ) {
+    const parsedCoupon = parseCouponCodeInput(body.couponCode);
+    if (!parsedCoupon) {
+      return bffJson(
+        { error: "İndirim kodu geçersiz.", code: "COUPON_INVALID" },
+        400,
+      );
+    }
+    couponCode = parsedCoupon;
+  }
+
   return {
     items,
     orderItems,
@@ -187,6 +213,7 @@ export function parseCheckoutPlaceBody(
     identityNumber,
     checkoutAttemptKey,
     paymentMethod,
+    ...(couponCode ? { couponCode } : {}),
   };
 }
 

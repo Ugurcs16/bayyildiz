@@ -303,6 +303,27 @@ export type TervonaCheckoutStatusResponse = {
   bankTransfer?: TervonaBankTransferPayload;
 };
 
+export async function tervonaPreviewCheckoutDiscount(input: {
+  payload: {
+    items: { productId: string; variantId: string; quantity: number }[];
+    paymentMethod: "card" | "bank_transfer";
+    couponCode: string;
+  };
+  sessionToken?: string | null;
+  clientIp?: string;
+}): Promise<unknown> {
+  return tervonaCustomerFetch<unknown>(
+    "/api/storefront/checkout/discounts/preview",
+    {
+      method: "POST",
+      body: input.payload,
+      sessionToken: input.sessionToken,
+      clientIp: input.clientIp,
+      timeoutMs: 12_000,
+    },
+  );
+}
+
 export async function tervonaCreateStorefrontOrder(input: {
   payload: Record<string, unknown>;
   idempotencyKey: string;
